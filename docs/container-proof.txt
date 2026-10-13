@@ -1,0 +1,50 @@
+1. Storage nodes running as containers
+drive-node-1  Up 47 seconds  127.0.0.1:9101->8080/tcp
+drive-node-2  Up 47 seconds  127.0.0.1:9102->8080/tcp
+drive-node-3  Up 47 seconds  127.0.0.1:9103->8080/tcp
+drive-node-4  Up 47 seconds  127.0.0.1:9104->8080/tcp
+drive-node-5  Up 47 seconds  127.0.0.1:9105->8080/tcp
+
+2. Upload 700000 bytes (sha256 0b3a233a15ae4314...): chunks on containers
+   chunk 0  on node-3, node-4, node-1
+   chunk 1  on node-3, node-4, node-2
+   chunk 2  on node-3, node-2, node-4
+
+3. docker stop drive-node-3 drive-node-4   (two containers crash together)
+   heartbeat noticed both within 3.0 s, with no administrator action
+   node-1  ONLINE       http://localhost:9101  chunks=24
+   node-2  ONLINE       http://localhost:9102  chunks=26
+   node-3  UNREACHABLE  http://localhost:9103  chunks=0
+   node-4  UNREACHABLE  http://localhost:9104  chunks=0
+   node-5  ONLINE       http://localhost:9105  chunks=27
+   14 files, 36 chunks | more nodes that can fail: 0
+
+4. Download while two containers are dead
+   sha256 of download: 0b3a233a15ae4314...  original: 0b3a233a15ae4314...  -> MATCH
+
+5. Upload a second file during the outage
+   chunk 0  on node-2, node-5, node-1
+   chunk 1  on node-5, node-2, node-1
+
+6. docker start drive-node-3 drive-node-4
+   all 5 nodes online again
+   node-1  ONLINE       http://localhost:9101  chunks=22
+   node-2  ONLINE       http://localhost:9102  chunks=23
+   node-3  ONLINE       http://localhost:9103  chunks=26
+   node-4  ONLINE       http://localhost:9104  chunks=19
+   node-5  ONLINE       http://localhost:9105  chunks=24
+   15 files, 38 chunks | more nodes that can fail: 2
+   second file after recovery:
+   chunk 0  on node-3, node-2, node-5
+   chunk 1  on node-5, node-3, node-2
+
+7. Failures one after another: node-1, node-2, node-3, node-4 containers stopped in turn
+   drive-node-1 stopped, 4 container(s) left: download MATCH
+   drive-node-2 stopped, 3 container(s) left: download MATCH
+   drive-node-3 stopped, 2 container(s) left: download MATCH
+   drive-node-4 stopped, 1 container(s) left: download MATCH
+   all containers started again
+
+8. Clean up
+   delete status 204
+   delete status 204

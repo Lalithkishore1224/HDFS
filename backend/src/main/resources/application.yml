@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: cloud-storage
+  datasource:
+    # PostgreSQL. Start a local one with `docker compose up -d` (see docker-compose.yml in the project root).
+    # Override these for any other server, e.g. DB_URL=jdbc:postgresql://db.example.com:5432/drive
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/drive}
+    username: ${DB_USER:drive}
+    password: ${DB_PASSWORD:drive}
+    hikari:
+      maximum-pool-size: 10
+      # Fail fast with a clear message when the database is not running.
+      connection-timeout: 10000
+  sql:
+    init:
+      mode: always            # runs schema.sql (unique indexes) after Hibernate builds the tables
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+  # "Continue with Google" switches on when these two are set, e.g. through the environment:
+  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+
+server:
+  # Behind a reverse proxy (Vite in development, nginx in production) the original host arrives in
+  # X-Forwarded-* headers; honoring them makes redirects and Google's callback URL use the public address.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+
+auth:
+  admin-emails: []           # these Google accounts become administrators, e.g. AUTH_ADMIN_EMAILS=you@gmail.com
+  dev-login-enabled: false   # local development only; see application-dev.yml
+
+storage:
+  root: ./data/files
+  quota-bytes: 1073741824      # 1 GiB per account
+  seed-demo-data: false        # the dev profile fills an empty drive with sample files
+  nodes: 5                     # storage nodes
+  replicas: 3                  # copies of each chunk; any two nodes can fail at once
+  chunk-bytes: 262144          # 256 KiB chunks (HDFS: 128 MB)
+
+# Admin storage summary, written by Google's Gemini API (model Gemini 3.8 Flash).
+# With no API key the summary is produced locally from the same numbers.
+insights:
+  api-key: ${GEMINI_API_KEY:}
+  model: gemini-3.8-flash
+  # Gemini 3 models count their internal reasoning tokens against this limit, so leave generous room.
+  max-tokens: 4096
+  timeout-seconds: 30
+
+optimizer:
+  hot-probability-threshold: 0.4   # files below this chance of being opened soon move to cold storage
+  min-training-samples: 10         # below this the optimizer falls back to the recency baseline
+  schedule-cron: "0 0 3 * * *"     # nightly at 03:00

@@ -1,0 +1,8 @@
+# Storage nodes run as separate containers (docker compose up -d --build node-1 ... node-5).
+storage:
+  node-urls:
+    - http://localhost:9101
+    - http://localhost:9102
+    - http://localhost:9103
+    - http://localhost:9104
+    - http://localhost:9105

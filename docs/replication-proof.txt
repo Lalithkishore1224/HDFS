@@ -1,0 +1,43 @@
+1. Upload proof-file.bin (700000 bytes, sha256 1c9916e7d656a8d4...)
+
+2. The file is cut into chunks; each chunk is on 3 of the 5 nodes
+   chunk 0  on node-4, node-3, node-2
+   chunk 1  on node-4, node-5, node-3
+   chunk 2  on node-3, node-1, node-5
+
+3. The cluster
+   node-1  online   chunks=22 
+   node-2  online   chunks=20 
+   node-3  online   chunks=24 
+   node-4  online   chunks=18 
+   node-5  online   chunks=24 
+   14 files, 36 chunks, each chunk on 3 of 5 nodes | chunks being re-copied: 0 | more nodes that can fail: 2
+
+4. Two nodes fail at the same time: node-4,node-3 (both hold chunk 0)
+   node-1  online   chunks=36 
+   node-2  online   chunks=36 
+   node-3  OFFLINE  chunks=24 
+   node-4  OFFLINE  chunks=18 
+   node-5  online   chunks=36 
+   14 files, 36 chunks, each chunk on 3 of 5 nodes | chunks being re-copied: 0 | more nodes that can fail: 2
+
+5. Download the file while they are down
+   sha256 of download: 1c9916e7d656a8d4...  original: 1c9916e7d656a8d4...  -> MATCH
+
+6. Upload a second file during the outage
+   chunk 0  on node-5, node-1, node-2
+   chunk 1  on node-5, node-1, node-2
+
+7. The two nodes return: repair completes the copies automatically
+   node-1  online   chunks=23 
+   node-2  online   chunks=21 
+   node-3  online   chunks=25 
+   node-4  online   chunks=19 
+   node-5  online   chunks=26 
+   15 files, 38 chunks, each chunk on 3 of 5 nodes | chunks being re-copied: 0 | more nodes that can fail: 2
+   chunk 0  on node-4, node-5, node-3
+   chunk 1  on node-5, node-1, node-2
+
+8. Clean up
+   delete status 204
+   delete status 204

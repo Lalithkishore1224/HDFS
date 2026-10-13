@@ -1,0 +1,20 @@
+# build output and dependencies
+node_modules/
+dist/
+target/
+*.log
+
+# runtime data: uploaded files, node storage, database dumps (never commit these)
+data*/
+backend/data*/
+
+# local environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store

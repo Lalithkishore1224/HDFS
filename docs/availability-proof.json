@@ -1,0 +1,458 @@
+{
+  "nodes": [
+    "node-1",
+    "node-2",
+    "node-3",
+    "node-4",
+    "node-5"
+  ],
+  "replicationFactor": 3,
+  "chunkBytes": 262144,
+  "files": [
+    {
+      "name": "thesis-draft.bin",
+      "id": "5d0c04fa-5d89-41b5-87da-75e627211235",
+      "bytes": 300000,
+      "sha": "cba9581d4c161bd466d9babcd10432dfd2af9df9f2ee0d2abe07fd7a965aea01",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-5",
+            "node-2",
+            "node-4"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-4",
+            "node-1",
+            "node-2"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "budget-2026.bin",
+      "id": "8874dc97-d3ee-4a5c-8723-4cae134b6b19",
+      "bytes": 520000,
+      "sha": "182d1471da9de3144eb0dbc0509c7bd43f2d77a354638288ebd45cf6c763058a",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-1",
+            "node-5",
+            "node-4"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-1",
+            "node-4",
+            "node-3"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "lecture-notes.bin",
+      "id": "88d6c2f7-298e-4a9f-b584-1de03ef67245",
+      "bytes": 700000,
+      "sha": "d5904600b40f769dbeb13f344addd4d2f59f0727ecc6bd210087faabf2010259",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-1",
+            "node-4",
+            "node-5"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-5",
+            "node-2",
+            "node-3"
+          ]
+        },
+        {
+          "index": 2,
+          "nodes": [
+            "node-5",
+            "node-1",
+            "node-4"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "photo-album.bin",
+      "id": "55932626-bac6-44d3-99d2-e66f3b5610dc",
+      "bytes": 900000,
+      "sha": "4ea41bdc1adcbe11764d62f1f61f52eac686165051d09022dcb199945f2bafdd",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-5",
+            "node-2",
+            "node-4"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-5",
+            "node-4",
+            "node-3"
+          ]
+        },
+        {
+          "index": 2,
+          "nodes": [
+            "node-2",
+            "node-4",
+            "node-3"
+          ]
+        },
+        {
+          "index": 3,
+          "nodes": [
+            "node-3",
+            "node-5",
+            "node-1"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dataset.bin",
+      "id": "eb88b5a6-87a8-498c-822e-6a9c75e5c21c",
+      "bytes": 1100000,
+      "sha": "5847c70b51009bf277050e772aa41e8279418260f8b51d3cc94f3c6fae3765be",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-3",
+            "node-5",
+            "node-2"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-4",
+            "node-3",
+            "node-5"
+          ]
+        },
+        {
+          "index": 2,
+          "nodes": [
+            "node-2",
+            "node-1",
+            "node-3"
+          ]
+        },
+        {
+          "index": 3,
+          "nodes": [
+            "node-5",
+            "node-2",
+            "node-4"
+          ]
+        },
+        {
+          "index": 4,
+          "nodes": [
+            "node-4",
+            "node-1",
+            "node-5"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "minutes.bin",
+      "id": "cd987a93-80c8-4657-849d-64e518c2cfc6",
+      "bytes": 1300000,
+      "sha": "1b45e5970c3ebacdce05183463b2aa33612e45132ef7edb8c3f56624f078fce7",
+      "chunks": [
+        {
+          "index": 0,
+          "nodes": [
+            "node-4",
+            "node-2",
+            "node-3"
+          ]
+        },
+        {
+          "index": 1,
+          "nodes": [
+            "node-2",
+            "node-5",
+            "node-3"
+          ]
+        },
+        {
+          "index": 2,
+          "nodes": [
+            "node-4",
+            "node-5",
+            "node-3"
+          ]
+        },
+        {
+          "index": 3,
+          "nodes": [
+            "node-1",
+            "node-2",
+            "node-5"
+          ]
+        },
+        {
+          "index": 4,
+          "nodes": [
+            "node-4",
+            "node-5",
+            "node-1"
+          ]
+        }
+      ]
+    }
+  ],
+  "simultaneous": {
+    "1": {
+      "cases": 5,
+      "allIntactCases": 5,
+      "fewestIntact": 6,
+      "results": [
+        {
+          "offline": [
+            "node-1"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-2"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-3"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-4"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-5"
+          ],
+          "intact": 6
+        }
+      ]
+    },
+    "2": {
+      "cases": 10,
+      "allIntactCases": 10,
+      "fewestIntact": 6,
+      "results": [
+        {
+          "offline": [
+            "node-1",
+            "node-2"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-3"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-4"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-5"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-3"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-4"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-5"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-3",
+            "node-4"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-3",
+            "node-5"
+          ],
+          "intact": 6
+        },
+        {
+          "offline": [
+            "node-4",
+            "node-5"
+          ],
+          "intact": 6
+        }
+      ]
+    },
+    "3": {
+      "cases": 10,
+      "allIntactCases": 0,
+      "fewestIntact": 2,
+      "results": [
+        {
+          "offline": [
+            "node-1",
+            "node-2",
+            "node-3"
+          ],
+          "intact": 5
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-2",
+            "node-4"
+          ],
+          "intact": 5
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-2",
+            "node-5"
+          ],
+          "intact": 5
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-3",
+            "node-4"
+          ],
+          "intact": 5
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-3",
+            "node-5"
+          ],
+          "intact": 5
+        },
+        {
+          "offline": [
+            "node-1",
+            "node-4",
+            "node-5"
+          ],
+          "intact": 2
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-3",
+            "node-4"
+          ],
+          "intact": 4
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-3",
+            "node-5"
+          ],
+          "intact": 2
+        },
+        {
+          "offline": [
+            "node-2",
+            "node-4",
+            "node-5"
+          ],
+          "intact": 3
+        },
+        {
+          "offline": [
+            "node-3",
+            "node-4",
+            "node-5"
+          ],
+          "intact": 2
+        }
+      ]
+    }
+  },
+  "sequential": [
+    {
+      "failed": "node-1",
+      "nodesOnline": 4,
+      "intact": 6,
+      "underReplicated": 0
+    },
+    {
+      "failed": "node-2",
+      "nodesOnline": 3,
+      "intact": 6,
+      "underReplicated": 0
+    },
+    {
+      "failed": "node-3",
+      "nodesOnline": 2,
+      "intact": 6,
+      "underReplicated": 0
+    },
+    {
+      "failed": "node-4",
+      "nodesOnline": 1,
+      "intact": 6,
+      "underReplicated": 0
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Local development: run with  mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# Adds a password-less sign-in so the approval workflow works without Google credentials.
+auth:
+  admin-emails:
+    - admin@dev.local
+  dev-login-enabled: true
+
+storage:
+  seed-demo-data: true

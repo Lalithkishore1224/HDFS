@@ -1,0 +1,79 @@
+# Local PostgreSQL for development:   docker compose up -d
+# The application connects to it with the defaults in backend/src/main/resources/application.yml
+# (database "drive", user "drive", password "drive"). It listens on this machine only.
+# For anything other than local development, set a real password: DB_PASSWORD=... docker compose up -d
+# Storage nodes:   docker compose up -d --build node-1 node-2 node-3 node-4 node-5
+# Each node is its own container (own process, filesystem and network address) running NodeServer; the
+# application talks to them over HTTP when started with the "docker-nodes" profile:
+#   mvn spring-boot:run -Dspring-boot.run.profiles=dev,docker-nodes
+# A node's data lives in backend/data/files/node-N on this machine, so it survives container restarts.
+# Simulate a real failure with:  docker stop drive-node-3     and recovery with:  docker start drive-node-3
+x-storage-node: &storage-node
+  build:
+    context: .
+    dockerfile: node/Dockerfile
+  image: drive-storage-node
+  restart: unless-stopped
+  user: "${DRIVE_UID:-1000}:${DRIVE_GID:-1000}"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: drive-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: drive
+      POSTGRES_USER: drive
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-drive}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - drive-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drive -d drive"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  node-1:
+    <<: *storage-node
+    container_name: drive-node-1
+    ports:
+      - "127.0.0.1:9101:8080"
+    volumes:
+      - ./backend/data/files/node-1:/data
+
+  node-2:
+    <<: *storage-node
+    container_name: drive-node-2
+    ports:
+      - "127.0.0.1:9102:8080"
+    volumes:
+      - ./backend/data/files/node-2:/data
+
+  node-3:
+    <<: *storage-node
+    container_name: drive-node-3
+    ports:
+      - "127.0.0.1:9103:8080"
+    volumes:
+      - ./backend/data/files/node-3:/data
+
+  node-4:
+    <<: *storage-node
+    container_name: drive-node-4
+    ports:
+      - "127.0.0.1:9104:8080"
+    volumes:
+      - ./backend/data/files/node-4:/data
+
+  node-5:
+    <<: *storage-node
+    container_name: drive-node-5
+    ports:
+      - "127.0.0.1:9105:8080"
+    volumes:
+      - ./backend/data/files/node-5:/data
+
+volumes:
+  drive-pgdata:

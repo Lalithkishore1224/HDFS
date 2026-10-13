@@ -1,0 +1,2662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drive API, explained simply</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f8fc; --surface: #ffffff; --surface-2: #f1f3f4; --border: #e0e4e9;
+  --text: #1f1f1f; --muted: #5f6368; --accent: #0b57d0; --accent-soft: #d3e3fd;
+  --ok: #0d652d; --ok-bg: #e6f4ea; --warn: #8a5300; --warn-bg: #fef7e0; --bad: #a50e0e; --bad-bg: #fce8e6;
+  --code-bg: #1e2227; --code-text: #e6e8eb; --code-muted: #8b949e;
+  --k: #8ab4f8; --s: #81c995; --n: #fdd663; --l: #f28b82;
+  --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131416; --surface: #1c1e21; --surface-2: #26292d; --border: #33373c;
+    --text: #e8eaed; --muted: #9aa0a6; --accent: #8ab4f8; --accent-soft: #263a5c;
+    --ok: #81c995; --ok-bg: #1b3326; --warn: #fdd663; --warn-bg: #3a3118; --bad: #f28b82; --bad-bg: #3c1f1d;
+    --code-bg: #0f1113;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--font); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, h5, p { margin: 0; }
+code { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: .1em .4em; border-radius: 6px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; gap: 40px; padding: 0 28px; }
+nav.toc { position: sticky; top: 0; align-self: start; padding: 32px 0; max-height: 100vh; overflow: auto; }
+nav.toc .brand { font-weight: 600; color: var(--accent); margin-bottom: 20px; font-size: 17px; }
+nav.toc a { display: block; padding: 7px 12px; margin: 1px 0; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 14px; }
+nav.toc a:hover { background: var(--surface-2); color: var(--text); }
+nav.toc a b { display: inline-block; width: 22px; color: var(--accent); }
+nav.toc .group { margin: 18px 12px 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+main { padding: 40px 0 96px; min-width: 0; }
+.hero h1 { font-size: 36px; font-weight: 600; letter-spacing: -.01em; }
+.hero p.sub { margin-top: 12px; font-size: 18px; color: var(--muted); max-width: 66ch; }
+.proof { margin-top: 20px; display: inline-flex; gap: 10px; align-items: center; padding: 10px 16px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 22px; font-size: 14px; color: var(--muted); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+.dot.req { background: #1a73e8; } .dot.res { background: #188038; } .dot.in { background: #9aa0a6; } .dot.db { background: #f9ab00; }
+
+section { margin-top: 64px; }
+section > h2.plain { font-size: 25px; font-weight: 600; margin-bottom: 8px; }
+.sec-head { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+.sec-head h2 { font-size: 25px; font-weight: 600; }
+.sec-letter { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 600; font-size: 18px; flex: none; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px 26px; }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.three .card h4 { font-size: 16px; margin-bottom: 8px; }
+.three .card p, .three .card li { font-size: 15px; color: var(--muted); }
+.three ul { margin: 6px 0 0; padding-left: 18px; }
+.analogy { margin-top: 16px; padding: 18px 22px; border-radius: 16px; background: var(--accent-soft); border-left: 4px solid var(--accent); }
+
+.pipeline { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin-top: 16px; }
+.stage { flex: 1 1 150px; background: var(--surface-2); border-radius: 14px; padding: 14px 16px; }
+.stage b { display: block; font-size: 14px; }
+.stage span { font-size: 13px; color: var(--muted); line-height: 1.5; display: block; margin-top: 4px; }
+.arrow { display: grid; place-items: center; color: var(--muted); font-size: 20px; flex: 0 0 18px; }
+.stack { display: flex; flex-direction: column; gap: 10px; flex: 1 1 170px; }
+.stack .stage { flex: 1 1 auto; }
+.stage.db { border-left: 4px solid #f9ab00; } .stage.disk { border-left: 4px solid #188038; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.where { border-radius: 14px; padding: 16px 18px; background: var(--surface-2); }
+.where h4 { font-size: 14px; margin-bottom: 6px; } .where ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+
+h3.cat { margin: 28px 0 10px; font-size: 16px; font-weight: 600; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+table.catalog, table.plain, table.gloss { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.catalog th, table.plain th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.catalog td, table.plain td, table.gloss td, table.gloss th { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; text-align: left; }
+table.gloss th { width: 24%; font-weight: 600; }
+table.catalog tr:last-child td, table.plain tr:last-child td, table.gloss tr:last-child td, table.gloss tr:last-child th { border-bottom: none; }
+.verb { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); }
+.v-get { color: #1a73e8; } .v-post { color: #188038; } .v-patch { color: #b06000; } .v-delete { color: #c5221f; }
+.who { font-size: 12px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.who-public { background: var(--ok-bg); color: var(--ok); } .who-admin { background: var(--bad-bg); color: var(--bad); }
+.who-approved { background: var(--accent-soft); color: var(--accent); }
+
+table.grid { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+table.grid th, table.grid td { padding: 6px 10px; border: 1px solid var(--border); text-align: center; }
+table.grid thead th { background: var(--surface-2); font-weight: 500; }
+table.grid tbody th { text-align: left; font-weight: 500; white-space: nowrap; }
+table.grid td.has { color: var(--accent); font-size: 16px; background: var(--accent-soft); }
+table.grid.big { font-size: 15px; margin-top: 0; } table.grid.big td.has { font-size: 20px; }
+
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 26px; margin-top: 22px; }
+.step-head { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
+.step-no { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 14px; }
+.step-head h3 { font-size: 20px; font-weight: 600; }
+.lead { color: var(--muted); margin-top: 4px; max-width: 75ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 14px; font-size: 13px; }
+.who-chip { padding: 3px 12px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.exchange { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 20px; }
+h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
+h5 { font-size: 14px; font-weight: 500; margin: 14px 0 6px; }
+.ms { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 12px; }
+.reply { font-size: 14px; margin-bottom: 8px; }
+.status-chip { display: inline-block; font-weight: 600; font-size: 12px; padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
+.status-chip.ok { background: var(--ok-bg); color: var(--ok); } .status-chip.warn { background: var(--warn-bg); color: var(--warn); } .status-chip.bad { background: var(--bad-bg); color: var(--bad); }
+.fingerprint { margin-top: 10px; padding: 8px 12px; border-radius: 12px; font-size: 13px; }
+.fingerprint.yes { background: var(--ok-bg); color: var(--ok); } .fingerprint.no { background: var(--bad-bg); color: var(--bad); }
+
+.code { background: var(--code-bg); color: var(--code-text); border-radius: 14px; overflow: hidden; }
+.code-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px 0 14px; min-height: 30px; }
+.code-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--code-muted); }
+.copy { background: transparent; border: 1px solid #3a3f45; color: var(--code-muted); border-radius: 8px; font: 12px var(--font); padding: 3px 10px; cursor: pointer; }
+.copy:hover { color: #fff; border-color: #6a7077; }
+pre { margin: 0; padding: 8px 14px 14px; font: 12.5px/1.65 var(--mono); overflow: auto; max-height: 360px; white-space: pre; }
+.j-key { color: var(--k); } .j-str { color: var(--s); } .j-num { color: var(--n); } .j-lit { color: var(--l); }
+.code .verb { color: #8ab4f8; background: transparent; padding: 0; font-weight: 600; }
+.hdr { color: #9aa0a6; }
+.status { font-weight: 600; padding: 1px 8px; border-radius: 6px; }
+.status.ok { background: #1b3326; color: #81c995; } .status.warn { background: #3a3118; color: #fdd663; } .status.bad { background: #3c1f1d; color: #f28b82; }
+.code .muted { color: var(--code-muted); }
+
+.inside-wrap { margin-top: 24px; }
+ol.inside { margin: 0; padding: 0; counter-reset: s; list-style: none; }
+ol.inside li { position: relative; padding: 0 0 12px 38px; }
+ol.inside li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+ol.inside li:not(:last-child)::after { content: ''; position: absolute; left: 11.5px; top: 30px; bottom: 4px; width: 1px; background: var(--border); }
+
+.effects { margin-top: 12px; padding: 18px 20px; border-radius: 16px; background: var(--surface-2); }
+.counters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.counter { font-size: 13px; padding: 4px 12px; border-radius: 999px; background: var(--surface); color: var(--muted); }
+.counter.changed { background: var(--warn-bg); color: var(--warn); }
+.rowcard { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); margin: 10px 0; overflow: hidden; }
+.rowcard-title { padding: 8px 14px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); }
+table.kv { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+table.kv th { text-align: left; width: 34%; font-weight: 500; color: var(--muted); padding: 5px 14px; vertical-align: top; }
+table.kv td { padding: 5px 14px; word-break: break-all; }
+table.kv tr + tr { border-top: 1px dashed var(--border); }
+.null { color: var(--code-muted); font-style: italic; }
+.store { margin: 10px 0; padding: 12px 14px; border-radius: 12px; font-size: 14px; }
+.store.none { background: var(--surface); color: var(--muted); }
+.store.added { background: var(--ok-bg); color: var(--ok); } .store.removed { background: var(--bad-bg); color: var(--bad); }
+.store table.grid { background: var(--surface); color: var(--text); }
+.callout { margin: 12px 0; padding: 14px 18px; border-radius: 14px; background: var(--accent-soft); border-left: 4px solid var(--accent); }
+.callout p { margin-top: 4px; font-size: 14px; }
+
+details.tech { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 12px; }
+details.tech summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); }
+.tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+ol.sql { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+ol.sql li { display: flex; gap: 10px; align-items: flex-start; background: var(--code-bg); border-radius: 10px; padding: 8px 12px; }
+ol.sql code { background: transparent; color: var(--code-text); font-size: 12px; padding: 0; word-break: break-word; }
+.sql-kind { font-family: var(--mono); font-size: 10.5px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; flex: none; margin-top: 1px; }
+.sql-select { background: #263a5c; color: #8ab4f8; } .sql-insert { background: #1b3326; color: #81c995; }
+.sql-update { background: #3a3118; color: #fdd663; } .sql-delete { background: #3c1f1d; color: #f28b82; }
+
+.note-list { margin: 12px 0 0; padding-left: 20px; } .note-list li { margin: 8px 0; }
+.setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+footer { margin-top: 64px; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+  nav.toc { position: static; padding: 20px 0 0; max-height: none; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  nav.toc .brand, nav.toc .group { width: 100%; margin: 6px 0; }
+  nav.toc a { display: inline-block; background: var(--surface); border: 1px solid var(--border); }
+  .exchange, .split, .setup-grid, .three, .tech-grid { grid-template-columns: minmax(0, 1fr); }
+  .step { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <div class="brand">Drive API</div>
+  <div class="group">Start here</div>
+  <a href="#basics">Read this first</a>
+  <a href="#words">Words used here</a>
+  <a href="#picture">The big picture</a>
+  <a href="#distributed">How a file is stored</a>
+  <a href="#setup">Try it yourself</a>
+  <div class="group">Walkthrough</div>
+  <a href="#sec-A"><b>A</b> Sign in</a><a href="#sec-B"><b>B</b> Create folders</a><a href="#sec-C"><b>C</b> Upload a file</a><a href="#sec-D"><b>D</b> Get the files</a><a href="#sec-E"><b>E</b> Open a file</a><a href="#sec-F"><b>F</b> When storage nodes fail</a><a href="#sec-G"><b>G</b> When things go wrong</a><a href="#sec-H"><b>H</b> Administrator calls</a><a href="#sec-I"><b>I</b> Delete</a>
+  <div class="group">Reference</div>
+  <a href="#catalog">All the actions</a>
+  <a href="#status">Status codes</a>
+  <a href="#notes">Good to know</a>
+</nav>
+
+<main>
+  <header class="hero">
+    <h1>The Drive API, explained simply</h1>
+    <p class="sub">Every button in the app sends a small message to the server. This page shows each message, the answer it gets back, and what really happens behind the scenes, using real examples.</p>
+    <div class="proof">&#10003; Recorded from the running system on 2026-10-14 02:00:39. Nothing on this page is made up.</div>
+    <div class="legend">
+      <span><span class="dot req"></span>1 · What you send</span>
+      <span><span class="dot res"></span>2 · What you get back</span>
+      <span><span class="dot in"></span>3 · Behind the scenes</span>
+      <span><span class="dot db"></span>4 · What changed</span>
+    </div>
+  </header>
+
+  <section id="basics">
+    <h2 class="plain">Read this first: what is an API?</h2>
+    <div class="analogy">
+      <b>Think of a restaurant.</b> You (the app) look at the menu and tell the waiter (the API) what you want. The waiter takes your order to the kitchen (the server) and brings back a reply. You never go into the kitchen. The API is the list of orders the waiter understands, and the replies you can expect.
+    </div>
+    <div class="three">
+      <div class="card"><h4>What you send</h4><p>An <b>action</b> and an <b>address</b>, and sometimes some details:</p>
+        <ul><li><b>GET</b>: show me something</li><li><b>POST</b>: create something, or do something</li><li><b>PATCH</b>: change something</li><li><b>DELETE</b>: remove something</li></ul></div>
+      <div class="card"><h4>What you get back</h4><p>A <b>status number</b> and usually some data:</p>
+        <ul><li><b>2xx</b>: it worked</li><li><b>4xx</b>: you asked for something the server cannot accept</li><li><b>5xx</b>: the server could not do it right now</li></ul></div>
+      <div class="card"><h4>Who is asking</h4><p>The server needs to know who you are:</p>
+        <ul><li>You sign in once and get a <b>session cookie</b></li><li>Changes also need a <b>CSRF token</b></li><li>Some actions are for <b>administrators</b> only</li></ul></div>
+    </div>
+  </section>
+
+  <section id="words">
+    <h2 class="plain">Words used on this page</h2>
+    <div class="table-wrap" style="margin-top:14px"><table class="gloss"><tbody><tr><th>API</th><td>The set of messages the app is allowed to send to the server. Every button in the app sends one.</td></tr><tr><th>Request / response</th><td>A request is what you send ("create this folder"). The response is the server's answer.</td></tr><tr><th>Endpoint</th><td>One address you can send a request to, such as <code>/api/folders</code>.</td></tr><tr><th>GET · POST · PATCH · DELETE</th><td>"Show me" · "create or do this" · "change this" · "remove this".</td></tr><tr><th>JSON</th><td>The plain-text format used for data, like <code>{"name": "Invoices"}</code>.</td></tr><tr><th>Status code</th><td>A number in every answer: 2xx means it worked, 4xx means you did something the server cannot accept.</td></tr><tr><th>Session cookie</th><td>Your "wristband" after signing in, so the server knows who you are on later calls.</td></tr><tr><th>CSRF token</th><td>A secret that stops other websites from making your browser change things behind your back.</td></tr><tr><th>Database</th><td>Where names, folders, owners and sizes are kept (PostgreSQL). It does not hold file contents.</td></tr><tr><th>Storage node</th><td>One place that holds file contents. This system has five (separate Docker containers).</td></tr><tr><th>Chunk</th><td>A piece of a file, 256 KiB. Big files are cut into several chunks.</td></tr><tr><th>Manifest</th><td>A tiny record per file saying how many chunks it has.</td></tr><tr><th>Replica / copy</th><td>Every chunk is stored on 3 different nodes, so there are 3 copies.</td></tr><tr><th>Heartbeat</th><td>The server pinging each node every few seconds to see if it is alive.</td></tr><tr><th>Repair</th><td>Re-creating copies that were lost when a node failed.</td></tr><tr><th>Hot / cold</th><td>Hot files are stored plainly for speed; cold files are compressed to save space. Users never see the difference.</td></tr></tbody></table></div>
+  </section>
+
+  <section id="picture">
+    <h2 class="plain">The big picture</h2>
+    <p class="muted">One server application. Every request walks the same path. Only the last stop differs.</p>
+    <div class="card" style="margin-top:16px">
+      <div class="pipeline">
+        <div class="stage"><b>The app or curl</b><span>Sends your request with your session cookie.</span></div><div class="arrow">&rarr;</div>
+        <div class="stage"><b>Security checks</b><span>Who are you? Are you approved? Is this an admin-only action?</span></div><div class="arrow">&rarr;</div>
+        <div class="stage"><b>The rules</b><span>Is the name valid? Is it your folder? Is there room in your allowance?</span></div><div class="arrow">&rarr;</div>
+        <div class="stack">
+          <div class="stage db"><b>Database</b><span>Names, folders, owners, sizes, history. No file contents.</span></div>
+          <div class="stage disk"><b>5 storage nodes</b><span>The file contents, in chunks, 3 copies each.</span></div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="where"><h4>The database knows</h4><ul><li>who you are and whether you are approved</li><li>every folder, and which folder is inside which</li><li>every file's name, owner, folder and size</li></ul></div>
+        <div class="where"><h4>The storage nodes know</h4><ul><li>nothing but pieces of bytes with random names</li><li>no folders, no file names, no owners</li><li>which is why folder actions never touch them</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="distributed">
+    <h2 class="plain">How a file is stored: the distributed part</h2>
+    <p class="muted">A file is not saved in one place. It is cut into pieces, and every piece is kept on three different storage nodes.</p>
+    <div style="margin-top:16px">
+<div class="card">
+  <p>This table is real: it is the upload from <a href="#upload">step 6</a> below. The file <b>invoices-march.csv</b>
+  (668,787 bytes) was cut into <b>3 pieces</b>. A dot means that node holds a copy of that piece.</p>
+  <div class="table-wrap" style="margin-top:12px"><table class="grid big"><thead><tr><th></th><th>node 1</th><th>node 2</th><th>node 3</th><th>node 4</th><th>node 5</th></tr></thead><tbody><tr><th>piece 0 <span class="muted">(262,144 bytes)</span></th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr><tr><th>piece 1 <span class="muted">(262,144 bytes)</span></th><td class="has">●</td><td class=""></td><td class="has">●</td><td class="has">●</td><td class=""></td></tr><tr><th>piece 2 <span class="muted">(144,499 bytes)</span></th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr></tbody></table></div>
+  <div class="split" style="margin-top:16px">
+    <div class="where"><h4>What you can see in the table</h4><ul>
+      <li>Every piece has <b>three</b> dots: three copies on three different nodes.</li>
+      <li>No node holds the whole file.</li>
+      <li>Different pieces use different nodes, so the load is spread out.</li></ul></div>
+    <div class="where"><h4>What happens when nodes fail</h4><ul>
+      <li>Stop <b>node-5</b> and <b>node-3</b> together: every piece still has at least one copy left.</li>
+      <li>The download in <a href="#download-degraded">step 17</a> returned the same bytes (identical fingerprint).</li>
+      <li>The server then re-creates the missing copies by itself ("repair").</li></ul></div>
+  </div>
+</div></div>
+    <div class="three">
+      <div class="card"><h4>1 · Cut</h4><p>The file is split into 256 KiB pieces called <b>chunks</b>, plus a small manifest saying how many.</p></div>
+      <div class="card"><h4>2 · Spread</h4><p>Each chunk goes to <b>3 of the 5 nodes</b>, picked by a hash of the chunk's id. No lookup table is needed: the same hash finds it again later.</p></div>
+      <div class="card"><h4>3 · Heal</h4><p>A heartbeat notices a dead node within seconds, and <b>repair</b> re-creates the lost copies on the nodes that still work.</p></div>
+    </div>
+  </section>
+
+  <section id="setup">
+    <h2 class="plain">Try it yourself</h2>
+    <p class="muted">Two things identify every call: a session cookie, and, on anything that changes data, a CSRF header.</p>
+    <div class="setup-grid">
+      <div class="card"><b>Session cookie</b>
+        <p class="muted small">You receive <code>JSESSIONID</code> when you sign in. Send it back on every call; <code>curl -b cookies.txt</code> does this for you.</p></div>
+      <div class="card"><b>CSRF header</b>
+        <p class="muted small">The server sets an <code>XSRF-TOKEN</code> cookie. For POST, PATCH and DELETE, send its value as the <code>X-XSRF-TOKEN</code> header. GET requests do not need it.</p></div>
+    </div>
+    <div style="margin-top:14px"><div class="code"><div class="code-bar"><span class="code-label">Setup: run once</span><button class="copy" data-copy="# 1. Pick a base URL and let curl keep the cookies in a file
+BASE=http://localhost:8080
+
+# 2. Any GET gives you the XSRF-TOKEN cookie
+curl -s -c cookies.txt &quot;$BASE/api/auth/config&quot;
+
+# 3. Read the token out of the cookie file (used for every POST / PATCH / DELETE)
+TOKEN=$(grep XSRF-TOKEN cookies.txt | awk &#x27;{print $7}&#x27;)
+
+# 4. Sign in (development login; in production use &quot;Continue with Google&quot; in a browser)
+curl -s -b cookies.txt -c cookies.txt -X POST &quot;$BASE/api/auth/dev-login&quot; \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;email&quot;:&quot;admin@dev.local&quot;,&quot;name&quot;:&quot;Dev Admin&quot;}&#x27;
+
+# 5. The session cookie changed; refresh the token before the next write
+TOKEN=$(grep XSRF-TOKEN cookies.txt | awk &#x27;{print $7}&#x27;)">Copy</button></div><pre># 1. Pick a base URL and let curl keep the cookies in a file
+BASE=http://localhost:8080
+
+# 2. Any GET gives you the XSRF-TOKEN cookie
+curl -s -c cookies.txt &quot;$BASE/api/auth/config&quot;
+
+# 3. Read the token out of the cookie file (used for every POST / PATCH / DELETE)
+TOKEN=$(grep XSRF-TOKEN cookies.txt | awk &#x27;{print $7}&#x27;)
+
+# 4. Sign in (development login; in production use &quot;Continue with Google&quot; in a browser)
+curl -s -b cookies.txt -c cookies.txt -X POST &quot;$BASE/api/auth/dev-login&quot; \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;email&quot;:&quot;admin@dev.local&quot;,&quot;name&quot;:&quot;Dev Admin&quot;}&#x27;
+
+# 5. The session cookie changed; refresh the token before the next write
+TOKEN=$(grep XSRF-TOKEN cookies.txt | awk &#x27;{print $7}&#x27;)</pre></div></div>
+  </section>
+
+  <section id="sec-A"><div class="sec-head"><span class="sec-letter">A</span><div><h2>Sign in</h2><p class="muted">Every call after this one carries your session cookie.</p></div></div>
+<article class="step" id="config">
+  <header class="step-head">
+    <span class="step-no">1</span>
+    <div>
+      <h3>Ask how people can sign in</h3>
+      <p class="lead">Asks the server how people are allowed to sign in. The sign-in page uses this to decide which buttons to show.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/auth/config</code></span>
+    <span class="who-chip">Who can do this: Anyone</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">3 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> Two yes/no answers: is Google sign-in set up, and is the development login switched on.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;googleEnabled&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;devLoginEnabled&quot;</span>: <span class="j-lit">true</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server answers straight away. This is the one call that needs no sign-in.</li><li>It also hands your browser a small secret called the <b>CSRF token</b> (in a cookie). Later calls that change things must show it, which stops other websites from tricking your browser into acting for you.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/auth/config HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+<span class="hdr">Set-Cookie</span>: XSRF-TOKEN=&lt;token&gt;; Path=/
+
+{
+  <span class="j-key">&quot;googleEnabled&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;devLoginEnabled&quot;</span>: <span class="j-lit">true</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/auth/config&quot;">Copy</button></div><pre>curl -s &quot;$BASE/api/auth/config&quot;</pre></div></div>
+    <h5>0 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <p class="muted small">No database statements ran.</p>
+  </details>
+</article>
+<article class="step" id="login">
+  <header class="step-head">
+    <span class="step-no">2</span>
+    <div>
+      <h3>Sign in (development login)</h3>
+      <p class="lead">Signs you in. In the real app this is the "Continue with Google" button; this development version signs in with just an email.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/auth/dev-login</code></span>
+    <span class="who-chip">Who can do this: Anyone</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (JSON)</span></div><pre>{
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>
+}</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">7 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> Your account: name, email, role and approval status.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+  <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server looks for an account with this identity. The first time, it creates one; afterwards it just refreshes the name and picture.</li><li>New accounts start as <b>PENDING</b>, which means "waiting for an administrator". Email addresses on the admin list become <b>ADMIN</b> and <b>APPROVED</b> straight away, as here.</li><li>The server remembers you with a <b>session</b>: it sends back a cookie called <code>JSESSIONID</code> that your browser shows on every later call.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    <div class="rowcard"><div class="rowcard-title">The new database record, in the <b>accounts (people)</b> table</div><table class="kv"><tr><th>id</th><td><span class="j-str">5fda1f98-6d14-460f-9da1-a2b27624d743</span></td></tr><tr><th>created_at</th><td><span class="j-str">2026-10-11T12:10:36.98106+00:00</span></td></tr><tr><th>decided_at</th><td><span class="j-str">2026-10-11T12:10:36.98106+00:00</span></td></tr><tr><th>email</th><td><span class="j-str">admin@dev.local</span></td></tr><tr><th>name</th><td><span class="j-str">Dev Admin</span></td></tr><tr><th>picture_url</th><td><span class="null">empty</span></td></tr><tr><th>quota_bytes</th><td><span class="null">empty</span></td></tr><tr><th>role</th><td><span class="j-str">ADMIN</span></td></tr><tr><th>status</th><td><span class="j-str">APPROVED</span></td></tr><tr><th>subject</th><td><span class="j-str">dev:admin@dev.local</span></td></tr></table></div>
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/auth/dev-login HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+
+{
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>
+}</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+<span class="hdr">Set-Cookie</span>: JSESSIONID=&lt;new session&gt;; Path=/; HttpOnly; SameSite=Lax
+
+{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+  <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/auth/dev-login&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;email&quot;:&quot;admin@dev.local&quot;,&quot;name&quot;:&quot;Dev Admin&quot;}&#x27;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/auth/dev-login&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;email&quot;:&quot;admin@dev.local&quot;,&quot;name&quot;:&quot;Dev Admin&quot;}&#x27;</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="me">
+  <header class="step-head">
+    <span class="step-no">3</span>
+    <div>
+      <h3>Who am I?</h3>
+      <p class="lead">Asks "who am I and am I approved yet?". The app uses it to choose between the sign-in page, the "waiting for approval" page and the drive.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/me</code></span>
+    <span class="who-chip">Who can do this: Anyone signed in</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">8 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The same account description as at sign-in.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+  <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server finds your account from the session cookie and reads it fresh from the database.</li><li>Because it is read fresh every time, an approval or rejection by the administrator takes effect immediately, even in a session that is already open.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/me HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+  <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+  <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/me&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/me&quot; -b cookies.txt</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article></section><section id="sec-B"><div class="sec-head"><span class="sec-letter">B</span><div><h2>Create folders</h2><p class="muted">A folder is just a database record. Watch the storage grid: nothing is written there.</p></div></div>
+<article class="step" id="create-folder">
+  <header class="step-head">
+    <span class="step-no">4</span>
+    <div>
+      <h3>Create a folder</h3>
+      <p class="lead">Creates an empty folder at the top level of your drive.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/folders</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (JSON)</span></div><pre>{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>
+}</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">31 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">201 · Created</span> The new folder: its id, name, and how many items it holds (0).</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.178882433Z&quot;</span>,
+  <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">0</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li><b>Safety checks.</b> The server confirms the CSRF token, recognises your session, and checks your account is approved. If not, it answers 403.</li><li><b>Name check.</b> Names cannot be blank or contain <code>/</code> or <code>\</code>, and two folders in the same place cannot share a name (capital letters do not count as different).</li><li><b>Save.</b> One new row is added to the <b>folders</b> table with your account as the owner.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>folders</b> 3 → 4</span></div>
+    <div class="rowcard"><div class="rowcard-title">The new database record, in the <b>folders</b> table</div><table class="kv"><tr><th>id</th><td><span class="j-str">52024967-ed35-4c44-bb69-242b02c5c8cc</span></td></tr><tr><th>created_at</th><td><span class="j-str">2026-10-13T20:30:12.178882+00:00</span></td></tr><tr><th>name</th><td><span class="j-str">Invoices 020012</span></td></tr><tr><th>owner_id</th><td><span class="j-str">5fda1f98-6d14-460f-9da1-a2b27624d743</span></td></tr><tr><th>parent_id</th><td><span class="null">empty</span></td></tr></table></div>
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    <aside class="callout"><b>A folder is only a database record.</b><p>Look at the storage grid: nothing was written to the storage nodes. A folder exists only as a row in the database, which is why moving or renaming a folder is instant and never copies any file data.</p></aside>
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/folders HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+
+{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>
+}</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">201 Created</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.178882433Z&quot;</span>,
+  <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">0</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/folders&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;:&quot;Invoices 020012&quot;}&#x27;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/folders&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;:&quot;Invoices 020012&quot;}&#x27;</pre></div></div>
+    <h5>7 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id is null order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into folders (created_at,name,owner_id,parent_id,id) values (?,?,?,?,?)</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="create-subfolder">
+  <header class="step-head">
+    <span class="step-no">5</span>
+    <div>
+      <h3>Create a sub-folder inside it</h3>
+      <p class="lead">Creates a folder <em>inside</em> another folder. It is the same call with one extra value, <code>parentId</code>.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/folders</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (JSON)</span></div><pre>{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>
+}</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">29 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">201 · Created</span> The new folder, now with the parent's id filled in.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.646444064Z&quot;</span>,
+  <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">0</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>Everything from the previous step applies.</li><li>The server first checks that the parent folder exists <em>and is yours</em>. A folder that is missing, or belongs to someone else, gives the same answer (404), so nobody can probe other people's folders.</li><li>The only difference in the saved record is <code>parent_id</code>. That one column is the whole folder tree: a folder's path is found by following parents upwards.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>folders</b> 4 → 5</span></div>
+    <div class="rowcard"><div class="rowcard-title">The new database record, in the <b>folders</b> table</div><table class="kv"><tr><th>id</th><td><span class="j-str">ebec0113-0552-4a92-a2ed-b0052bfadcc3</span></td></tr><tr><th>created_at</th><td><span class="j-str">2026-10-13T20:30:12.646444+00:00</span></td></tr><tr><th>name</th><td><span class="j-str">2026</span></td></tr><tr><th>owner_id</th><td><span class="j-str">5fda1f98-6d14-460f-9da1-a2b27624d743</span></td></tr><tr><th>parent_id</th><td><span class="j-str">52024967-ed35-4c44-bb69-242b02c5c8cc</span></td></tr></table></div>
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/folders HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+
+{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>
+}</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">201 Created</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+  <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+  <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.646444064Z&quot;</span>,
+  <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">0</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/folders&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;:&quot;2026&quot;,&quot;parentId&quot;:&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;}&#x27;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/folders&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;:&quot;2026&quot;,&quot;parentId&quot;:&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;}&#x27;</pre></div></div>
+    <h5>8 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into folders (created_at,name,owner_id,parent_id,id) values (?,?,?,?,?)</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?</code></li></ol>
+  </details>
+</article></section><section id="sec-C"><div class="sec-head"><span class="sec-letter">C</span><div><h2>Upload a file</h2><p class="muted">The one place file contents are written. Here the file is cut up and spread over the storage nodes.</p></div></div>
+<article class="step" id="upload">
+  <header class="step-head">
+    <span class="step-no">6</span>
+    <div>
+      <h3>Upload a file into that sub-folder</h3>
+      <p class="lead">Sends a file (about 650 KB here) into a folder. The file travels as a "form upload" with the file itself and the id of the folder to put it in.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/files</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (form upload)</span></div><pre><span class="j-key">folderId</span> = ebec0113-0552-4a92-a2ed-b0052bfadcc3
+<span class="j-key">file</span> = @invoices-march.csv (text/csv, 668787 bytes)</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">59 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">201 · Created</span> A description of the new file: id, name, folder, size, type and dates. Nothing about where its bytes are kept.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+  <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+  <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+  <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+  <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156541675Z&quot;</span>,
+  <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156541675Z&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li><b>Checks.</b> The folder must be yours, and the file must fit in your storage allowance (otherwise 413).</li><li><b>Cut into pieces.</b> The server cuts the file into <b>chunks</b> of 256 KiB. This file became 3 chunks (the last one is smaller), plus a tiny <b>manifest</b> that says "3 chunks, 668787 bytes".</li><li><b>Spread the copies.</b> Each chunk is written to <b>3 different storage nodes</b>, chosen by a hash of the chunk's id, so the pieces spread evenly. The manifest is stored the same way.</li><li><b>Then the record.</b> Only after the bytes are safe does the server save the file's record (name, owner, folder, size) in the database, in one short step. If that fails, the bytes are removed again.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>files</b> 13 → 14</span></div>
+    <div class="rowcard"><div class="rowcard-title">The new database record, in the <b>files</b> table</div><table class="kv"><tr><th>id</th><td><span class="j-str">603ccba2-bd8b-4b8b-be0e-7ea824cc86b9</span></td></tr><tr><th>access_count</th><td><span class="j-num">0</span></td></tr><tr><th>content_type</th><td><span class="j-str">text/csv</span></td></tr><tr><th>folder_id</th><td><span class="j-str">ebec0113-0552-4a92-a2ed-b0052bfadcc3</span></td></tr><tr><th>hot_probability</th><td><span class="null">empty</span></td></tr><tr><th>last_accessed_at</th><td><span class="j-str">2026-10-13T20:30:13.156542+00:00</span></td></tr><tr><th>name</th><td><span class="j-str">invoices-march.csv</span></td></tr><tr><th>owner_id</th><td><span class="j-str">5fda1f98-6d14-460f-9da1-a2b27624d743</span></td></tr><tr><th>size_bytes</th><td><span class="j-num">668787</span></td></tr><tr><th>stored_size_bytes</th><td><span class="j-num">668787</span></td></tr><tr><th>tier</th><td><span class="j-str">HOT</span></td></tr><tr><th>uploaded_at</th><td><span class="j-str">2026-10-13T20:30:13.156542+00:00</span></td></tr></table></div>
+    <div class="store added"><b>Storage nodes: New pieces stored.</b> A dot means that node holds a copy.<table class="grid"><thead><tr><th></th><th>node 1</th><th>node 2</th><th>node 3</th><th>node 4</th><th>node 5</th></tr></thead><tbody><tr><th>file …603c · piece 0</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr><tr><th>file …603c · piece 1</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class="has">●</td><td class=""></td></tr><tr><th>file …603c · piece 2</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr><tr><th>file …603c · manifest (the &quot;table of contents&quot;)</th><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td><td class="has">●</td></tr></tbody></table></div>
+    <aside class="callout"><b>The name you gave is only a label.</b><p>On the storage nodes the pieces are named after a random id, never <code>invoices-march.csv</code>. The name, the folder and the owner live in the database record. No single node holds the whole file, and every piece exists on three nodes.</p></aside>
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/files HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: multipart/form-data; boundary=…
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+<span class="j-key">folderId</span> = ebec0113-0552-4a92-a2ed-b0052bfadcc3
+<span class="j-key">file</span> = @invoices-march.csv (text/csv, 668787 bytes)</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">201 Created</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+  <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+  <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+  <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+  <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156541675Z&quot;</span>,
+  <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156541675Z&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/files&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -F &quot;file=@invoices-march.csv;type=text/csv&quot; \
+  -F &quot;folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/files&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -F &quot;file=@invoices-march.csv;type=text/csv&quot; \
+  -F &quot;folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</pre></div></div>
+    <h5>6 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into stored_files (access_count,content_type,folder_id,hot_probability,last_accessed_at,name,owner_id,size_bytes,stored_size_bytes,tier,uploaded_at,id) values (?,?,?,?,?,?,?,?,?,?,?,?)</code></li></ol>
+  </details>
+</article>
+<article class="step" id="placement">
+  <header class="step-head">
+    <span class="step-no">7</span>
+    <div>
+      <h3>Ask where the pieces of the file are kept (admin)</h3>
+      <p class="lead">Shows where each piece of a file is kept. This is the proof that the file really was spread across several storage nodes.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">163 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> For every chunk: its size and the list of nodes that hold a copy.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">668787</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: [
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">0</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">262144</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    },
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">1</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">262144</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    },
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">2</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">144499</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    }
+  ]
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server does not look the answer up in a table. It <b>recomputes</b> it: it ranks all five nodes with the same hash that was used at upload time, then confirms which of them really hold the piece.</li><li>Each chunk lists 3 nodes, and different chunks list different nodes. That is what "distributed" means here.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">668787</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: [
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">0</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">262144</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    },
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">1</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">262144</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    },
+    {
+      <span class="j-key">&quot;index&quot;</span>: <span class="j-num">2</span>,
+      <span class="j-key">&quot;tier&quot;</span>: <span class="j-str">&quot;HOT&quot;</span>,
+      <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">144499</span>,
+      <span class="j-key">&quot;nodes&quot;</span>: [
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        },
+        {
+          <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+          <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>
+        }
+      ]
+    }
+  ]
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement&quot; -b cookies.txt</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="nodes">
+  <header class="step-head">
+    <span class="step-no">8</span>
+    <div>
+      <h3>See the storage nodes (admin)</h3>
+      <p class="lead">Shows the health of the whole storage cluster: every node, how many pieces it holds, and how many more nodes could fail without any file becoming unreadable.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/admin/storage/nodes</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">1406 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The replication setting (3 copies), how many nodes can fail, and one line per node.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4477681</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">19</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3668561</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">17</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3562607</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server checks each node (every few seconds it also pings them, a "heartbeat") and adds up what each one holds.</li><li><code>nodesThatCanFail: 2</code> means any 2 nodes could stop working right now and every file would still be readable.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/admin/storage/nodes HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4477681</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">19</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3668561</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">17</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3562607</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/admin/storage/nodes&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/admin/storage/nodes&quot; -b cookies.txt</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article></section><section id="sec-D"><div class="sec-head"><span class="sec-letter">D</span><div><h2>Get the files</h2><p class="muted">Reading is safe: nothing is changed.</p></div></div>
+<article class="step" id="list-files">
+  <header class="step-head">
+    <span class="step-no">9</span>
+    <div>
+      <h3>Get all the files in a folder</h3>
+      <p class="lead">Lists the files inside one folder. This is what the file table in the app is built from.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">16 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> A list of files with their id, name, size, type and dates.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+    <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+    <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+    <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>,
+    <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>
+  }
+]</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server asks the database for files where the owner is <em>you</em> and the folder is the one requested.</li><li>Because "the owner is you" is part of the question, a folder id that belongs to someone else simply returns nothing. It can never show their files.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files?folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3 HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+    <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+    <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+    <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>,
+    <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>
+  }
+]</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/files?folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/files?folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot; -b cookies.txt</pre></div></div>
+    <h5>3 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.owner_id=? and sf1_0.folder_id=? order by sf1_0.name</code></li></ol>
+  </details>
+</article>
+<article class="step" id="list-folders">
+  <header class="step-head">
+    <span class="step-no">10</span>
+    <div>
+      <h3>Get the folders inside a folder</h3>
+      <p class="lead">Lists the folders inside a folder (leave it out for the top level), each with the number of items it holds.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/folders</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">20 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> A list of folders, each with an <code>itemCount</code>.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+    <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.646444Z&quot;</span>,
+    <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">1</span>
+  }
+]</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>One question finds the child folders. Then, for each child, a few more small questions count what is inside it.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/folders?parentId=52024967-ed35-4c44-bb69-242b02c5c8cc HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+    <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:12.646444Z&quot;</span>,
+    <span class="j-key">&quot;itemCount&quot;</span>: <span class="j-num">1</span>
+  }
+]</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/folders?parentId=52024967-ed35-4c44-bb69-242b02c5c8cc&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/folders?parentId=52024967-ed35-4c44-bb69-242b02c5c8cc&quot; -b cookies.txt</pre></div></div>
+    <h5>5 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="search">
+  <header class="step-head">
+    <span class="step-no">11</span>
+    <div>
+      <h3>Search all files by name</h3>
+      <p class="lead">Looks for files whose name contains some text, anywhere in your drive.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">16 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The matching files, newest first.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+    <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+    <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+    <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>,
+    <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>
+  }
+]</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>With search text, the folder is ignored and the database is asked for your files whose name contains the text, ignoring capital letters.</li><li>Only file names are searched, not folder names and not file contents.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files?search=invoices-march HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;603ccba2-bd8b-4b8b-be0e-7ea824cc86b9&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices-march.csv&quot;</span>,
+    <span class="j-key">&quot;folderId&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;contentType&quot;</span>: <span class="j-str">&quot;text/csv&quot;</span>,
+    <span class="j-key">&quot;sizeBytes&quot;</span>: <span class="j-num">668787</span>,
+    <span class="j-key">&quot;uploadedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>,
+    <span class="j-key">&quot;lastAccessedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:13.156542Z&quot;</span>
+  }
+]</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/files?search=invoices-march&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/files?search=invoices-march&quot; -b cookies.txt</pre></div></div>
+    <h5>3 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.owner_id=? and upper(sf1_0.name) like upper(?) escape &#x27;\&#x27; order by sf1_0.uploaded_at desc</code></li></ol>
+  </details>
+</article>
+<article class="step" id="path">
+  <header class="step-head">
+    <span class="step-no">12</span>
+    <div>
+      <h3>Get the breadcrumb path of a folder</h3>
+      <p class="lead">Returns the chain of folders from the top down to one folder. The app draws its breadcrumb ("My files &gt; Invoices &gt; 2026") from it.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">16 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> A list of folders, outermost first.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-lit">null</span>
+  },
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>
+  }
+]</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server starts at the folder and keeps going to its parent until it reaches the top, then reverses the list.</li><li>Every step is limited to your own folders.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+[
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Invoices 020012&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-lit">null</span>
+  },
+  {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;ebec0113-0552-4a92-a2ed-b0052bfadcc3&quot;</span>,
+    <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;2026&quot;</span>,
+    <span class="j-key">&quot;parentId&quot;</span>: <span class="j-str">&quot;52024967-ed35-4c44-bb69-242b02c5c8cc&quot;</span>
+  }
+]</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path&quot; -b cookies.txt</pre></div></div>
+    <h5>4 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="storage">
+  <header class="step-head">
+    <span class="step-no">13</span>
+    <div>
+      <h3>How much space am I using?</h3>
+      <p class="lead">Says how much of your storage allowance you have used.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/storage</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">17 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> Bytes used and your limit.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;usedBytes&quot;</span>: <span class="j-num">7442468</span>,
+  <span class="j-key">&quot;quotaBytes&quot;</span>: <span class="j-num">1073741824</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server adds up the sizes of your files and compares it with your limit (1 GiB by default).</li><li>It deliberately says nothing about how or where the bytes are kept.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/storage HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;usedBytes&quot;</span>: <span class="j-num">7442468</span>,
+  <span class="j-key">&quot;quotaBytes&quot;</span>: <span class="j-num">1073741824</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/storage&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/storage&quot; -b cookies.txt</pre></div></div>
+    <h5>3 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?</code></li></ol>
+  </details>
+</article></section><section id="sec-E"><div class="sec-head"><span class="sec-letter">E</span><div><h2>Open a file</h2><p class="muted">Viewing and downloading both count as an &quot;open&quot;.</p></div></div>
+<article class="step" id="view">
+  <header class="step-head">
+    <span class="step-no">14</span>
+    <div>
+      <h3>View the file (inline)</h3>
+      <p class="lead">Shows a file inside the app (an image, a PDF, a table of text) instead of downloading it.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">475 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The file's contents, marked "inline" so the browser displays it.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (the file&#x27;s contents)</span></div><pre>invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li><b>Find the pieces.</b> The server reads the manifest to learn how many chunks there are, then fetches each chunk from any storage node that holds it, and joins them in order.</li><li><b>Safe display.</b> The type to show is decided from the file extension, not from what the uploader claimed. A <code>.csv</code> is shown as plain text; web pages and scripts are also shown as plain text so they can never run inside the app.</li><li><b>Remember the visit.</b> The open is recorded in the open history. That history is what the storage optimizer learns from.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>open history</b> 60 → 61</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: text/plain;charset=UTF-8
+<span class="hdr">Content-Disposition</span>: inline; filename=&quot;=?UTF-8?Q?invoices-march.csv?=&quot;; filename*=UTF-8&#x27;&#x27;invoices-march.csv
+<span class="hdr">Content-Length</span>: 668787
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view&quot; -b cookies.txt</pre></div></div>
+    <h5>7 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into access_logs (accessed_at,file_id,response_time_ms,served_from_cold) values (?,?,?,?)</code></li><li><span class="sql-kind sql-update">update</span><code>update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="download">
+  <header class="step-head">
+    <span class="step-no">15</span>
+    <div>
+      <h3>Download the file (attachment)</h3>
+      <p class="lead">Sends the file so the browser saves it.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">424 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The exact bytes that were uploaded. Its fingerprint (SHA-256) matches the original.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (the file&#x27;s contents)</span></div><pre>invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div>
+      <div class="fingerprint yes">Fingerprint (SHA-256) of the downloaded file: <code>ce6ef676f1c526ffb8993c47…</code> = identical to the uploaded file ✔</div>
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>Same as viewing, except the reply says "attachment" so the browser saves it instead of showing it.</li><li>If the optimizer had archived the file (compressed it to save space), it is restored automatically before it is sent. You never notice.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>open history</b> 61 → 62</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: text/csv
+<span class="hdr">Content-Disposition</span>: attachment; filename=&quot;=?UTF-8?Q?invoices-march.csv?=&quot;; filename*=UTF-8&#x27;&#x27;invoices-march.csv
+<span class="hdr">Content-Length</span>: 668787
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -OJ &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download&quot; -b cookies.txt">Copy</button></div><pre>curl -s -OJ &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download&quot; -b cookies.txt</pre></div></div>
+    <h5>6 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into access_logs (accessed_at,file_id,response_time_ms,served_from_cold) values (?,?,?,?)</code></li><li><span class="sql-kind sql-update">update</span><code>update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?</code></li></ol>
+  </details>
+</article></section><section id="sec-F"><div class="sec-head"><span class="sec-letter">F</span><div><h2>When storage nodes fail</h2><p class="muted">Two nodes fail at once, and the file is still delivered, byte for byte.</p></div></div>
+<article class="step" id="node-down">
+  <header class="step-head">
+    <span class="step-no">16</span>
+    <div>
+      <h3>Two storage nodes stop working (admin)</h3>
+      <p class="lead">Simulates a failure: two of the storage nodes that hold the first chunk are switched off at the same moment. (In the container setup you can also really stop them with <code>docker stop</code>.)</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/admin/storage/nodes/offline</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">9022 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The cluster status, now with those two nodes out of service.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7219016</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7219016</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;MAINTENANCE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7218304</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;MAINTENANCE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>Both nodes are taken out of service together, like a power cut that hits two machines at once.</li><li>The server immediately starts <b>repair</b>: every piece that lost a copy is copied to the nodes that are still working, so each piece is back to three copies where possible.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store added"><b>Storage nodes:</b> 65 pieces were stored across the nodes (node-1: 16, node-2: 22, node-4: 27). This covers every file in the drive, not just one.</div>
+    <aside class="callout"><b>Why so many pieces were copied.</b><p>With only three working nodes left, every piece is stored on all three. The count above covers every file in the drive, not only this one.</p></aside>
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/admin/storage/nodes/offline?names=node-5,node-3 HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7219016</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7219016</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;MAINTENANCE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">7218304</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;MAINTENANCE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/admin/storage/nodes/offline?names=node-5,node-3&quot; \
+  -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/admin/storage/nodes/offline?names=node-5,node-3&quot; \
+  -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="download-degraded">
+  <header class="step-head">
+    <span class="step-no">17</span>
+    <div>
+      <h3>Download the same file while those two nodes are down</h3>
+      <p class="lead">Downloads the same file again, while two storage nodes are down.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">741 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The same bytes. The fingerprint (SHA-256) is identical to the one before the failure.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (the file&#x27;s contents)</span></div><pre>invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div>
+      <div class="fingerprint yes">Fingerprint (SHA-256) of the downloaded file while <b>node-5 and node-3</b> were down: <code>ce6ef676f1c526ffb8993c47…</code> = identical to the uploaded file ✔</div>
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>For each chunk, the server asks the best-ranked node; if that node is down it simply asks the next one.</li><li>Because every chunk had three copies on three different nodes, at least one copy of every chunk survived two failures.</li><li><b>Nothing visible changed for the user.</b> Same file, same bytes, no error.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>open history</b> 62 → 63</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    <aside class="callout"><b>This is the whole point of the design.</b><p>Two nodes failed at once and the file was still delivered perfectly. If three nodes holding the same chunk had failed together, that chunk would be unavailable until one of them came back.</p></aside>
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: text/csv
+<span class="hdr">Content-Disposition</span>: attachment; filename=&quot;=?UTF-8?Q?invoices-march.csv?=&quot;; filename*=UTF-8&#x27;&#x27;invoices-march.csv
+<span class="hdr">Content-Length</span>: 668787
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+invoice,customer,amount,status
+INV-2026-00001,Customer 1,37.01,paid
+INV-2026-00002,Customer 2,74.02,paid
+INV-2026-00003,Customer 3,111.03,due
+INV-2026-00004,Customer 4,148.04,paid
+INV-2026-00005,Customer 5,185.05,paid
+INV-2026-00006,Customer 6,222.06,due
+INV-2026-00007,Customer 7,259.07,paid
+INV-2026-00008,Customer 8,296.08,paid
+INV-2026-00009,Customer 9,333.09,due
+INV-2026-00010,Customer 10,370.10,paid
+INV-2026-00011,Customer 11,407.11,paid
+INV-2026-00012,Customer 12,444.12,due
+INV-2026-00013,Customer 13,481.13,paid
+INV-2026-00014,Customer 14,518.14,paid
+INV-2026-00015,Customer 15,555.15,due
+INV-2026-00016,Customer 16,592.16,paid
+INV-2026-00017,Customer 17,629.17,paid
+INV-2026-00018,Custome…</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -OJ &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download&quot; -b cookies.txt">Copy</button></div><pre>curl -s -OJ &quot;$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download&quot; -b cookies.txt</pre></div></div>
+    <h5>6 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.id=?</code></li><li><span class="sql-kind sql-insert">insert</span><code>insert into access_logs (accessed_at,file_id,response_time_ms,served_from_cold) values (?,?,?,?)</code></li><li><span class="sql-kind sql-update">update</span><code>update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="node-up">
+  <header class="step-head">
+    <span class="step-no">18</span>
+    <div>
+      <h3>The two nodes come back (admin)</h3>
+      <p class="lead">Brings the two nodes back into service.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/admin/storage/nodes/online</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">6552 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> The cluster status with all nodes working again.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4477681</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">19</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3668561</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">17</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3562607</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The returning nodes are brought up to date with anything they missed.</li><li>The temporary extra copies made during the outage are removed, so the pieces go back to their normal, evenly spread places.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store removed"><b>Storage nodes:</b> 65 pieces were removed across the nodes (node-1: 16, node-2: 22, node-4: 27). This covers every file in the drive, not just one.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/admin/storage/nodes/online?names=node-5,node-3 HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;replicationFactor&quot;</span>: <span class="j-num">3</span>,
+  <span class="j-key">&quot;nodesThatCanFail&quot;</span>: <span class="j-num">2</span>,
+  <span class="j-key">&quot;files&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">36</span>,
+  <span class="j-key">&quot;underReplicatedChunks&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;chunkBytes&quot;</span>: <span class="j-num">262144</span>,
+  <span class="j-key">&quot;separateProcesses&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;nodes&quot;</span>: [
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-1&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9101&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4477681</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-2&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9102&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">19</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3668561</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-3&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9103&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">5222712</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-4&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9104&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">17</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">3562607</span>
+    },
+    {
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;node-5&quot;</span>,
+      <span class="j-key">&quot;state&quot;</span>: <span class="j-str">&quot;ONLINE&quot;</span>,
+      <span class="j-key">&quot;online&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;endpoint&quot;</span>: <span class="j-str">&quot;http://localhost:9105&quot;</span>,
+      <span class="j-key">&quot;chunks&quot;</span>: <span class="j-num">24</span>,
+      <span class="j-key">&quot;bytes&quot;</span>: <span class="j-num">4725487</span>
+    }
+  ]
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/admin/storage/nodes/online?names=node-5,node-3&quot; \
+  -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/admin/storage/nodes/online?names=node-5,node-3&quot; \
+  -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article></section><section id="sec-G"><div class="sec-head"><span class="sec-letter">G</span><div><h2>When things go wrong</h2><p class="muted">Each mistake gets a clear answer and changes nothing.</p></div></div>
+<article class="step" id="err-duplicate">
+  <header class="step-head">
+    <span class="step-no">19</span>
+    <div>
+      <h3>Error: a folder with that name already exists</h3>
+      <p class="lead">Tries to create a folder whose name already exists in the same place (capital letters do not matter).</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/folders</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (JSON)</span></div><pre>{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices 020012&quot;</span>
+}</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">20 ms</span></h4>
+      <p class="reply"><span class="status-chip warn">409 · Already exists</span> <b>409 Conflict</b> with a readable message.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;about:blank&quot;</span>,
+  <span class="j-key">&quot;title&quot;</span>: <span class="j-str">&quot;Conflict&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-num">409</span>,
+  <span class="j-key">&quot;detail&quot;</span>: <span class="j-str">&quot;A folder named \&quot;invoices 020012\&quot; already exists here&quot;</span>,
+  <span class="j-key">&quot;instance&quot;</span>: <span class="j-str">&quot;/api/folders&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The checks pass, then the server compares the name with the folders already in that place and finds a match.</li><li><b>Nothing was written.</b> The row counters did not change.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/folders HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+
+{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;invoices 020012&quot;</span>
+}</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status warn">409 Conflict</span>
+<span class="hdr">Content-Type</span>: application/problem+json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;about:blank&quot;</span>,
+  <span class="j-key">&quot;title&quot;</span>: <span class="j-str">&quot;Conflict&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-num">409</span>,
+  <span class="j-key">&quot;detail&quot;</span>: <span class="j-str">&quot;A folder named \&quot;invoices 020012\&quot; already exists here&quot;</span>,
+  <span class="j-key">&quot;instance&quot;</span>: <span class="j-str">&quot;/api/folders&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/folders&quot; -b cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;name&quot;:&quot;invoices 020012&quot;}&#x27;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/folders&quot; -b cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;name&quot;:&quot;invoices 020012&quot;}&#x27;</pre></div></div>
+    <h5>3 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id is null order by f1_0.name</code></li></ol>
+  </details>
+</article>
+<article class="step" id="err-badname">
+  <header class="step-head">
+    <span class="step-no">20</span>
+    <div>
+      <h3>Error: a folder name that is not allowed</h3>
+      <p class="lead">Tries a folder name that contains a slash.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/folders</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <div class="code"><div class="code-bar"><span class="code-label">You send (JSON)</span></div><pre>{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;a/b&quot;</span>
+}</pre></div>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">12 ms</span></h4>
+      <p class="reply"><span class="status-chip warn">400 · Your input was not valid</span> <b>400 Bad Request</b>.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;about:blank&quot;</span>,
+  <span class="j-key">&quot;title&quot;</span>: <span class="j-str">&quot;Bad Request&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-num">400</span>,
+  <span class="j-key">&quot;detail&quot;</span>: <span class="j-str">&quot;Folder names cannot contain / or \\&quot;</span>,
+  <span class="j-key">&quot;instance&quot;</span>: <span class="j-str">&quot;/api/folders&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The input is rejected before any real work starts, so the database is never touched for the folder.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/folders HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;
+
+{
+  <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;a/b&quot;</span>
+}</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status warn">400 Bad Request</span>
+<span class="hdr">Content-Type</span>: application/problem+json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;about:blank&quot;</span>,
+  <span class="j-key">&quot;title&quot;</span>: <span class="j-str">&quot;Bad Request&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-num">400</span>,
+  <span class="j-key">&quot;detail&quot;</span>: <span class="j-str">&quot;Folder names cannot contain / or \\&quot;</span>,
+  <span class="j-key">&quot;instance&quot;</span>: <span class="j-str">&quot;/api/folders&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/folders&quot; -b cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;name&quot;:&quot;a/b&quot;}&#x27;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/folders&quot; -b cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; -d &#x27;{&quot;name&quot;:&quot;a/b&quot;}&#x27;</pre></div></div>
+    <h5>2 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="err-anon">
+  <header class="step-head">
+    <span class="step-no">21</span>
+    <div>
+      <h3>Error: calling without being signed in</h3>
+      <p class="lead">Asks for the file list without being signed in.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/files</code></span>
+    <span class="who-chip">Who can do this: Anyone</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">10 ms</span></h4>
+      <p class="reply"><span class="status-chip warn">401 · You are not signed in</span> <b>401 Unauthorized</b>, with no body.</p>
+      <p class="muted small">The reply has no body.</p>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server finds no session, so it refuses.</li><li>A person who is signed in but still <em>pending</em> would get <b>403 Forbidden</b> instead. The two numbers tell apart "who are you?" from "you are not allowed yet".</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/files HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status warn">401 Unauthorized</span>
+<span class="hdr">Content-Length</span>: 0
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+<span class="hdr">Set-Cookie</span>: XSRF-TOKEN=&lt;token&gt;; Path=/
+
+<span class="muted">(empty body)</span></pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -i &quot;$BASE/api/files&quot;   # no cookie">Copy</button></div><pre>curl -s -i &quot;$BASE/api/files&quot;   # no cookie</pre></div></div>
+    <h5>1 SQL statement <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li></ol>
+  </details>
+</article></section><section id="sec-H"><div class="sec-head"><span class="sec-letter">H</span><div><h2>Administrator calls</h2><p class="muted">Only administrators may use these.</p></div></div>
+<article class="step" id="admin-users">
+  <header class="step-head">
+    <span class="step-no">22</span>
+    <div>
+      <h3>See all the accounts (admin)</h3>
+      <p class="lead">Lists the accounts so an administrator can approve or reject people.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/admin/users</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">16 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> Each account together with how much storage it uses.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>[
+  {
+    <span class="j-key">&quot;account&quot;</span>: {
+      <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+      <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+      <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+      <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+      <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+      <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+    },
+    <span class="j-key">&quot;usedBytes&quot;</span>: <span class="j-num">7442468</span>
+  }
+]</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server first checks the caller is an administrator; anyone else gets 403.</li><li>Add <code>?status=PENDING</code> to see only the people waiting for approval.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/admin/users HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+[
+  {
+    <span class="j-key">&quot;account&quot;</span>: {
+      <span class="j-key">&quot;id&quot;</span>: <span class="j-str">&quot;5fda1f98-6d14-460f-9da1-a2b27624d743&quot;</span>,
+      <span class="j-key">&quot;email&quot;</span>: <span class="j-str">&quot;admin@dev.local&quot;</span>,
+      <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Dev Admin&quot;</span>,
+      <span class="j-key">&quot;pictureUrl&quot;</span>: <span class="j-lit">null</span>,
+      <span class="j-key">&quot;role&quot;</span>: <span class="j-str">&quot;ADMIN&quot;</span>,
+      <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;APPROVED&quot;</span>,
+      <span class="j-key">&quot;createdAt&quot;</span>: <span class="j-str">&quot;2026-10-11T12:10:36.981060Z&quot;</span>
+    },
+    <span class="j-key">&quot;usedBytes&quot;</span>: <span class="j-num">7442468</span>
+  }
+]</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/admin/users&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/admin/users&quot; -b cookies.txt</pre></div></div>
+    <h5>3 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 order by ua1_0.created_at</code></li><li><span class="sql-kind sql-select">select</span><code>select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?</code></li></ol>
+  </details>
+</article>
+<article class="step" id="admin-stats">
+  <header class="step-head">
+    <span class="step-no">23</span>
+    <div>
+      <h3>See the storage numbers (admin)</h3>
+      <p class="lead">Shows storage numbers for the administrator: how much space is saved by archiving, how many files are cold, and how fast downloads start.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-get">GET</span> <code>/api/admin/stats</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">17 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> File counts, logical size versus size on disk, downloads and timings.</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;fileCount&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;hotFileCount&quot;</span>: <span class="j-num">13</span>,
+  <span class="j-key">&quot;coldFileCount&quot;</span>: <span class="j-num">1</span>,
+  <span class="j-key">&quot;logicalBytes&quot;</span>: <span class="j-num">7442468</span>,
+  <span class="j-key">&quot;storedBytes&quot;</span>: <span class="j-num">7218690</span>,
+  <span class="j-key">&quot;quotaBytes&quot;</span>: <span class="j-num">1073741824</span>,
+  <span class="j-key">&quot;downloads&quot;</span>: <span class="j-num">63</span>,
+  <span class="j-key">&quot;coldRestores&quot;</span>: <span class="j-num">6</span>,
+  <span class="j-key">&quot;averageResponseMs&quot;</span>: <span class="j-num">81.39682539682539</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>This is the only place where "hot" (fast) and "cold" (compressed) storage are visible. Ordinary users never see it.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">GET</span> /api/admin/stats HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;fileCount&quot;</span>: <span class="j-num">14</span>,
+  <span class="j-key">&quot;hotFileCount&quot;</span>: <span class="j-num">13</span>,
+  <span class="j-key">&quot;coldFileCount&quot;</span>: <span class="j-num">1</span>,
+  <span class="j-key">&quot;logicalBytes&quot;</span>: <span class="j-num">7442468</span>,
+  <span class="j-key">&quot;storedBytes&quot;</span>: <span class="j-num">7218690</span>,
+  <span class="j-key">&quot;quotaBytes&quot;</span>: <span class="j-num">1073741824</span>,
+  <span class="j-key">&quot;downloads&quot;</span>: <span class="j-num">63</span>,
+  <span class="j-key">&quot;coldRestores&quot;</span>: <span class="j-num">6</span>,
+  <span class="j-key">&quot;averageResponseMs&quot;</span>: <span class="j-num">81.39682539682539</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s &quot;$BASE/api/admin/stats&quot; -b cookies.txt">Copy</button></div><pre>curl -s &quot;$BASE/api/admin/stats&quot; -b cookies.txt</pre></div></div>
+    <h5>5 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select avg(al1_0.response_time_ms) from access_logs al1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select count(*) from access_logs al1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select count(al1_0.id) from access_logs al1_0 where al1_0.served_from_cold</code></li></ol>
+  </details>
+</article>
+<article class="step" id="insights">
+  <header class="step-head">
+    <span class="step-no">24</span>
+    <div>
+      <h3>Ask for a plain-language storage summary (admin)</h3>
+      <p class="lead">Asks for a short plain-language summary of the storage numbers, with a few suggestions.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-post">POST</span> <code>/api/admin/insights</code></span>
+    <span class="who-chip">Who can do this: An administrator</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">23 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">200 · It worked</span> A summary, a list of suggestions, and which source wrote it (AI or built-in).</p>
+      <div class="code"><div class="code-bar"><span class="code-label">You get back (JSON)</span></div><pre>{
+  <span class="j-key">&quot;summary&quot;</span>: <span class="j-str">&quot;The system holds 14 files: 13 in fast (hot) storage and 1 archived (cold). Together they are 7.1 MB as users see them but occupy 6.9 MB on disk, saving 219 KB (3%). Of 63 downloads, 6 (10%) had to wait for an archived file to be restored, and a download starts in about 81 ms on average.&quot;</span>,
+  <span class="j-key">&quot;suggestions&quot;</span>: [
+    <span class="j-str">&quot;The storage optimizer has not run since the server started. Run it from this page to archive files that are no longer used.&quot;</span>
+  ],
+  <span class="j-key">&quot;source&quot;</span>: <span class="j-str">&quot;BUILT_IN&quot;</span>,
+  <span class="j-key">&quot;model&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;note&quot;</span>: <span class="j-str">&quot;No AI API key is configured on the server, so this summary was written without AI from the same numbers.&quot;</span>,
+  <span class="j-key">&quot;generatedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:39.054916329Z&quot;</span>
+}</pre></div>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>Only totals are used. File names, file contents and user details are never sent anywhere.</li><li>With a Gemini API key configured, the numbers are sent to Gemini 3.8 Flash and it writes the summary. Without a key (as in this capture) a built-in writer produces the summary from the same numbers, and the reply says so in <code>source</code>.</li><li>Nothing is changed automatically; it only explains and suggests.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter">Nothing was added or removed in the database</span></div>
+    
+    <div class="store none"><b>Storage nodes:</b> nothing changed. No file contents were written or removed.</div>
+    
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">POST</span> /api/admin/insights HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">200 OK</span>
+<span class="hdr">Content-Type</span>: application/json
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+{
+  <span class="j-key">&quot;summary&quot;</span>: <span class="j-str">&quot;The system holds 14 files: 13 in fast (hot) storage and 1 archived (cold). Together they are 7.1 MB as users see them but occupy 6.9 MB on disk, saving 219 KB (3%). Of 63 downloads, 6 (10%) had to wait for an archived file to be restored, and a download starts in about 81 ms on average.&quot;</span>,
+  <span class="j-key">&quot;suggestions&quot;</span>: [
+    <span class="j-str">&quot;The storage optimizer has not run since the server started. Run it from this page to archive files that are no longer used.&quot;</span>
+  ],
+  <span class="j-key">&quot;source&quot;</span>: <span class="j-str">&quot;BUILT_IN&quot;</span>,
+  <span class="j-key">&quot;model&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;note&quot;</span>: <span class="j-str">&quot;No AI API key is configured on the server, so this summary was written without AI from the same numbers.&quot;</span>,
+  <span class="j-key">&quot;generatedAt&quot;</span>: <span class="j-str">&quot;2026-10-13T20:30:39.054916329Z&quot;</span>
+}</pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X POST &quot;$BASE/api/admin/insights&quot; -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;">Copy</button></div><pre>curl -s -X POST &quot;$BASE/api/admin/insights&quot; -b cookies.txt -c cookies.txt -H &quot;X-XSRF-TOKEN: $TOKEN&quot;</pre></div></div>
+    <h5>5 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select avg(al1_0.response_time_ms) from access_logs al1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select count(*) from access_logs al1_0</code></li><li><span class="sql-kind sql-select">select</span><code>select count(al1_0.id) from access_logs al1_0 where al1_0.served_from_cold</code></li></ol>
+  </details>
+</article></section><section id="sec-I"><div class="sec-head"><span class="sec-letter">I</span><div><h2>Delete</h2><p class="muted">Deleting a folder removes its whole tree, including every copy of every piece.</p></div></div>
+<article class="step" id="delete-folder">
+  <header class="step-head">
+    <span class="step-no">25</span>
+    <div>
+      <h3>Delete the folder (and everything inside it)</h3>
+      <p class="lead">Deletes a folder and <b>everything inside it</b>: sub-folders and files.</p>
+    </div>
+  </header>
+  <div class="meta">
+    <span class="endpoint"><span class="verb v-delete">DELETE</span> <code>/api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc</code></span>
+    <span class="who-chip">Who can do this: A signed-in account that an administrator has approved</span>
+  </div>
+
+  <div class="exchange">
+    <div class="col">
+      <h4><span class="dot req"></span>1 · What you send</h4>
+      <p class="muted small">Nothing is sent in the body; the address says everything.</p>
+    </div>
+    <div class="col">
+      <h4><span class="dot res"></span>2 · What you get back <span class="ms">73 ms</span></h4>
+      <p class="reply"><span class="status-chip ok">204 · Done, nothing to show</span> <b>204 No Content</b>: done, nothing to show.</p>
+      <p class="muted small">The reply has no body.</p>
+      
+    </div>
+  </div>
+
+  <div class="inside-wrap">
+    <h4><span class="dot in"></span>3 · What happens behind the scenes</h4>
+    <ol class="inside"><li>The server finds the folder and every folder below it.</li><li>For each file: its pieces are removed from all storage nodes, its open history is deleted, then its database record.</li><li>Finally the folder records themselves are deleted.</li></ol>
+  </div>
+
+  <div class="effects">
+    <h4><span class="dot db"></span>4 · What changed</h4>
+    <div class="counters"><span class="counter changed"><b>folders</b> 5 → 3</span><span class="counter changed"><b>files</b> 14 → 13</span><span class="counter changed"><b>open history</b> 63 → 60</span></div>
+    
+    <div class="store removed"><b>Storage nodes: Pieces removed.</b> A dot means that node holds a copy.<table class="grid"><thead><tr><th></th><th>node 1</th><th>node 2</th><th>node 3</th><th>node 4</th><th>node 5</th></tr></thead><tbody><tr><th>file …603c · piece 0</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr><tr><th>file …603c · piece 1</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class="has">●</td><td class=""></td></tr><tr><th>file …603c · piece 2</th><td class="has">●</td><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td></tr><tr><th>file …603c · manifest (the &quot;table of contents&quot;)</th><td class=""></td><td class="has">●</td><td class=""></td><td class="has">●</td><td class="has">●</td></tr></tbody></table></div>
+    <aside class="callout"><b>One request, a whole tree. No undo.</b><p>Compare the counters and the storage grid: the folders, the file, and every copy of its pieces disappeared. There is no trash.</p></aside>
+  </div>
+
+  <details class="tech">
+    <summary>For developers: raw HTTP, curl and the SQL the server ran</summary>
+    <div class="tech-grid">
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw request</span></div><pre><span class="verb">DELETE</span> /api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc HTTP/1.1
+Host: localhost:8080
+<span class="hdr">Accept</span>: */*
+<span class="hdr">Cookie</span>: JSESSIONID=&lt;your session&gt;
+<span class="hdr">X-XSRF-TOKEN</span>: &lt;value of the XSRF-TOKEN cookie&gt;</pre></div></div>
+      <div><div class="code"><div class="code-bar"><span class="code-label">Raw response</span></div><pre>HTTP/1.1 <span class="status ok">204 No Content</span>
+<span class="hdr">X-Content-Type-Options</span>: nosniff
+
+<span class="muted">(empty body)</span></pre></div></div>
+    </div>
+    <div style="margin-top:12px"><div class="code"><div class="code-bar"><span class="code-label">curl</span><button class="copy" data-copy="curl -s -X DELETE &quot;$BASE/api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot;">Copy</button></div><pre>curl -s -X DELETE &quot;$BASE/api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc&quot; \
+  -b cookies.txt -c cookies.txt \
+  -H &quot;X-XSRF-TOKEN: $TOKEN&quot;</pre></div></div>
+    <h5>14 SQL statements <span class="muted">(logged by Hibernate)</span></h5>
+    <ol class="sql"><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from accounts ua1_0 where ua1_0.subject=?</code></li><li><span class="sql-kind sql-select">select</span><code>select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select … from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.folder_id=? order by sf1_0.name</code></li><li><span class="sql-kind sql-select">select</span><code>select al1_0.id,al1_0.accessed_at,al1_0.file_id,al1_0.response_time_ms,al1_0.served_from_cold from access_logs al1_0 where al1_0.file_id=?</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from access_logs where id=?</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from access_logs where id=?</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from access_logs where id=?</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from stored_files where id=?</code></li><li><span class="sql-kind sql-select">select</span><code>select … from stored_files sf1_0 where sf1_0.folder_id=? order by sf1_0.name</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from folders where id=?</code></li><li><span class="sql-kind sql-delete">delete</span><code>delete from folders where id=?</code></li></ol>
+  </details>
+</article></section>
+
+  <section id="catalog">
+    <h2 class="plain">All the actions the API offers</h2>
+    <p class="muted">"Who" says what is needed: <b>public</b> needs nothing, <b>approved</b> needs a signed-in account an administrator has approved, <b>admin</b> needs an administrator.</p>
+    <h3 class="cat">Sign in</h3><div class="table-wrap"><table class="catalog"><thead><tr><th>Action</th><th>Address</th><th>Who</th><th>What it does</th></tr></thead><tbody><tr><td><span class="verb v-get">GET</span></td><td><code>/api/auth/config</code></td><td><span class="who who-public">public</span></td><td>How can people sign in? (Google, development login)</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/oauth2/authorization/google</code></td><td><span class="who who-public">public</span></td><td>Start "Continue with Google" (a browser redirect).</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/auth/dev-login</code></td><td><span class="who who-dev">dev only</span></td><td>Sign in with just an email, for local development.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/auth/logout</code></td><td><span class="who who-signed">signed in</span></td><td>Sign out.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/me</code></td><td><span class="who who-signed">signed in</span></td><td>Who am I, and am I approved yet?</td></tr></tbody></table></div><h3 class="cat">Folders</h3><div class="table-wrap"><table class="catalog"><thead><tr><th>Action</th><th>Address</th><th>Who</th><th>What it does</th></tr></thead><tbody><tr><td><span class="verb v-get">GET</span></td><td><code>/api/folders?parentId=</code></td><td><span class="who who-approved">approved</span></td><td>The folders inside a folder (top level if left out).</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/folders/all</code></td><td><span class="who who-approved">approved</span></td><td>Every folder you own, as a flat list (for the "move to…" picker).</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/folders/{id}/path</code></td><td><span class="who who-approved">approved</span></td><td>The chain of folders down to this one (breadcrumb).</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/folders</code></td><td><span class="who who-approved">approved</span></td><td>Create a folder: name, and optionally the parent.</td></tr><tr><td><span class="verb v-patch">PATCH</span></td><td><code>/api/folders/{id}</code></td><td><span class="who who-approved">approved</span></td><td>Rename a folder.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/folders/{id}/move</code></td><td><span class="who who-approved">approved</span></td><td>Move a folder (never into itself).</td></tr><tr><td><span class="verb v-delete">DELETE</span></td><td><code>/api/folders/{id}</code></td><td><span class="who who-approved">approved</span></td><td>Delete a folder and everything in it.</td></tr></tbody></table></div><h3 class="cat">Files</h3><div class="table-wrap"><table class="catalog"><thead><tr><th>Action</th><th>Address</th><th>Who</th><th>What it does</th></tr></thead><tbody><tr><td><span class="verb v-get">GET</span></td><td><code>/api/files?folderId=&amp;search=</code></td><td><span class="who who-approved">approved</span></td><td>The files in a folder, or a name search over the whole drive.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/files</code></td><td><span class="who who-approved">approved</span></td><td>Upload a file (and optionally the folder to put it in).</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/files/{id}/view</code></td><td><span class="who who-approved">approved</span></td><td>Show a file inside the app.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/files/{id}/download</code></td><td><span class="who who-approved">approved</span></td><td>Download a file.</td></tr><tr><td><span class="verb v-patch">PATCH</span></td><td><code>/api/files/{id}</code></td><td><span class="who who-approved">approved</span></td><td>Rename a file.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/files/{id}/move</code></td><td><span class="who who-approved">approved</span></td><td>Move a file to another folder.</td></tr><tr><td><span class="verb v-delete">DELETE</span></td><td><code>/api/files/{id}</code></td><td><span class="who who-approved">approved</span></td><td>Delete a file and every copy of it.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/storage</code></td><td><span class="who who-approved">approved</span></td><td>How much of your allowance you have used.</td></tr></tbody></table></div><h3 class="cat">Administrator: people</h3><div class="table-wrap"><table class="catalog"><thead><tr><th>Action</th><th>Address</th><th>Who</th><th>What it does</th></tr></thead><tbody><tr><td><span class="verb v-get">GET</span></td><td><code>/api/admin/users?status=</code></td><td><span class="who who-admin">admin</span></td><td>The accounts, and how much storage each uses.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/users/{id}/approve</code></td><td><span class="who who-admin">admin</span></td><td>Approve an account.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/users/{id}/reject</code></td><td><span class="who who-admin">admin</span></td><td>Reject, or revoke, an account.</td></tr></tbody></table></div><h3 class="cat">Administrator: storage</h3><div class="table-wrap"><table class="catalog"><thead><tr><th>Action</th><th>Address</th><th>Who</th><th>What it does</th></tr></thead><tbody><tr><td><span class="verb v-get">GET</span></td><td><code>/api/admin/stats</code></td><td><span class="who who-admin">admin</span></td><td>Space saved, cold files, download speed.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/admin/optimizer</code></td><td><span class="who who-admin">admin</span></td><td>The archiving threshold and the last run.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/optimizer/run</code></td><td><span class="who who-admin">admin</span></td><td>Run the archiving optimizer now.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/insights</code></td><td><span class="who who-admin">admin</span></td><td>A plain-language storage summary with suggestions.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/admin/storage/nodes</code></td><td><span class="who who-admin">admin</span></td><td>Health of all storage nodes.</td></tr><tr><td><span class="verb v-get">GET</span></td><td><code>/api/admin/storage/files/{id}/placement</code></td><td><span class="who who-admin">admin</span></td><td>Which nodes hold each piece of a file.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/nodes/{name}/offline</code></td><td><span class="who who-admin">admin</span></td><td>Take one node out of service (maintenance).</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/nodes/{name}/online</code></td><td><span class="who who-admin">admin</span></td><td>Put one node back into service.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/nodes/offline?names=a,b</code></td><td><span class="who who-admin">admin</span></td><td>Take several nodes out at the same moment.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/nodes/online?names=a,b</code></td><td><span class="who who-admin">admin</span></td><td>Put several nodes back.</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/nodes</code></td><td><span class="who who-admin">admin</span></td><td>Add a storage node (directory mode).</td></tr><tr><td><span class="verb v-post">POST</span></td><td><code>/api/admin/storage/repair</code></td><td><span class="who who-admin">admin</span></td><td>Re-create any missing copies now.</td></tr></tbody></table></div>
+  </section>
+
+  <section id="status">
+    <h2 class="plain">Status codes you will see</h2>
+    <div class="table-wrap" style="margin-top:14px"><table class="plain"><thead><tr><th>Status</th><th>What it means here</th></tr></thead><tbody><tr><td><code>200 OK</code></td><td>It worked, and the reply has the result.</td></tr><tr><td><code>201 Created</code></td><td>A folder or file was created; the reply describes it.</td></tr><tr><td><code>204 No Content</code></td><td>It worked and there is nothing to show (deletes).</td></tr><tr><td><code>400 Bad Request</code></td><td>The input is not valid (blank name, a slash in a name, a folder moved into itself).</td></tr><tr><td><code>401 Unauthorized</code></td><td>You are not signed in.</td></tr><tr><td><code>403 Forbidden</code></td><td>Signed in but not allowed: account waiting or rejected, missing CSRF token, or not an administrator.</td></tr><tr><td><code>404 Not Found</code></td><td>It does not exist, <em>or it belongs to someone else</em> (deliberately the same answer).</td></tr><tr><td><code>409 Conflict</code></td><td>A folder with that name already exists in that place.</td></tr><tr><td><code>413 Payload Too Large</code></td><td>The upload would go over your storage allowance.</td></tr><tr><td><code>415 Unsupported Media Type</code></td><td>That file type has no safe preview; download it instead.</td></tr><tr><td><code>503 Service Unavailable</code></td><td>The pieces of that file are on nodes that are all down right now; try again when one returns.</td></tr></tbody></table></div>
+    <p class="muted small" style="margin-top:12px">Errors carry a small JSON body with a human-readable <code>detail</code>.</p>
+  </section>
+
+  <section id="notes">
+    <h2 class="plain">Good to know</h2>
+    <div class="card" style="margin-top:14px">
+      <ul class="note-list">
+        <li><b>Folders are virtual.</b> Creating, renaming and moving a folder only changes database records; no file data moves.</li>
+        <li><b>Someone else's items answer 404, not 403.</b> It avoids confirming that an id exists.</li>
+        <li><b>Storage tiers are invisible to users on purpose.</b> A rarely used file may be compressed ("cold"); opening it restores it automatically. Only the admin endpoints show tiers.</li>
+        <li><b>Two storage nodes may fail at the same moment</b> without any file becoming unreadable. Three failing together can make the pieces they alone held unreadable until one returns (HTTP 503).</li>
+        <li><b>In this setup all five nodes run on one computer</b> (as Docker containers), so a failure of the whole computer is not covered.</li>
+        <li><b>The development login exists only in the <code>dev</code> profile.</b> In real use people arrive through Google and the same account rules apply.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Regenerate this page: start the backend with <code>--logging.level.org.hibernate.SQL=DEBUG</code>, run <code>docs/capture_api.py</code>, then <code>docs/build_api_docs.py</code>.</footer>
+</main>
+</div>
+
+<script>
+document.addEventListener('click', function (e) {
+  var copy = e.target.closest('.copy');
+  if (copy) {
+    navigator.clipboard.writeText(copy.dataset.copy).then(function () {
+      copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy'; }, 1400);
+    });
+  }
+});
+</script>
+</body>
+</html>
