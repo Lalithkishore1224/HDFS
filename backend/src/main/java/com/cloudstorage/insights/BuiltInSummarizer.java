@@ -36,8 +36,91 @@ final class BuiltInSummarizer {
         return text.toString();
     }
 
+
+    /** OK, ATTENTION or CRITICAL, decided from the numbers alone. */
+    static String status(StorageSnapshot s) {
+        if (s.clusterKnown() && (s.nodesOnline() == 0 || s.nodesThatCanFail() == 0 && s.nodesOnline() < s.storageNodes())) {
+            return "CRITICAL";
+        }
+        boolean redundancyReduced = s.clusterKnown()
+                && (s.nodesOnline() < s.storageNodes() || s.underReplicatedChunks() > 0);
+        boolean slow = s.downloads() > 0 && (s.averageResponseMs() > 500 || s.coldRestorePercent() > 10);
+        return redundancyReduced || slow ? "ATTENTION" : "OK";
+    }
+
+    /** The one sentence that matters most. */
+    static String headline(StorageSnapshot s) {
+        if (s.fileCount() == 0) {
+            return "The system is empty: there is nothing to analyse yet.";
+        }
+        if (s.clusterKnown() && s.nodesOnline() < s.storageNodes()) {
+            return String.format(Locale.ROOT,
+                    "%d of %d storage nodes are not serving; %d more could fail before files become unreadable.",
+                    s.storageNodes() - s.nodesOnline(), s.storageNodes(), s.nodesThatCanFail());
+        }
+        if (s.clusterKnown() && s.underReplicatedChunks() > 0) {
+            return String.format(Locale.ROOT, "%d chunks have fewer copies than wanted and are being re-copied.",
+                    s.underReplicatedChunks());
+        }
+        if (s.downloads() > 0 && s.coldRestorePercent() > 10) {
+            return String.format(Locale.ROOT, "%.0f%% of downloads waited on an archived file being restored.",
+                    s.coldRestorePercent());
+        }
+        if (s.clusterKnown()) {
+            return String.format(Locale.ROOT, "Storage is healthy: %d of %d nodes serving, %d copies of every chunk.",
+                    s.nodesOnline(), s.storageNodes(), s.replicationFactor());
+        }
+        return "Storage looks healthy.";
+    }
+
+    /** Facts from the numbers: redundancy, performance, efficiency and accounts. */
+    static List<String> findings(StorageSnapshot s) {
+        List<String> facts = new ArrayList<>();
+        if (s.fileCount() == 0) {
+            return facts;
+        }
+        if (s.clusterKnown()) {
+            facts.add(String.format(Locale.ROOT,
+                    "Redundancy: %d of %d nodes are serving, every chunk is kept in %d copies, and %d more node(s) could fail without losing access to any file.",
+                    s.nodesOnline(), s.storageNodes(), s.replicationFactor(), s.nodesThatCanFail()));
+        }
+        if (s.downloads() > 0) {
+            facts.add(String.format(Locale.ROOT,
+                    "Performance: a download starts in about %.0f ms, and %.0f%% of %d downloads waited for an archived file to be restored.",
+                    s.averageResponseMs(), s.coldRestorePercent(), s.downloads()));
+        }
+        facts.add(String.format(Locale.ROOT,
+                "Efficiency: %.0f%% of files (%d of %d) are archived, saving %s (%.0f%%) of disk space.",
+                s.coldFilePercent(), s.coldFileCount(), s.fileCount(), bytes(s.savedBytes()), s.savedPercent()));
+        facts.add(s.optimizerHasRun()
+                ? String.format(Locale.ROOT, "The optimizer last archived %d and promoted %d files.",
+                        s.lastRunMovedToCold(), s.lastRunMovedToHot())
+                : "The optimizer has not run since the server started, so no files have been archived by it.");
+        if (s.accountsKnown()) {
+            facts.add(s.pendingAccounts() > 0
+                    ? String.format(Locale.ROOT, "Accounts: %d of %d are waiting for approval.", s.pendingAccounts(), s.accounts())
+                    : String.format(Locale.ROOT, "Accounts: %d, none waiting for approval.", s.accounts()));
+        }
+        return List.copyOf(facts);
+    }
+
     static List<String> suggestions(StorageSnapshot s) {
         List<String> advice = new ArrayList<>();
+        if (s.clusterKnown() && s.nodesOnline() < s.storageNodes()) {
+            advice.add(String.format(Locale.ROOT,
+                    "%d of %d storage nodes are not serving, so only %d more could fail before files become unreadable. Bring them back in the Storage nodes panel to restore full redundancy.",
+                    s.storageNodes() - s.nodesOnline(), s.storageNodes(), s.nodesThatCanFail()));
+        }
+        if (s.clusterKnown() && s.underReplicatedChunks() > 0) {
+            advice.add(String.format(Locale.ROOT,
+                    "%d chunks have fewer copies than the %d wanted. Repair runs by itself, but you can start it with Repair copies.",
+                    s.underReplicatedChunks(), s.replicationFactor()));
+        }
+        if (s.accountsKnown() && s.pendingAccounts() > 0) {
+            advice.add(String.format(Locale.ROOT,
+                    "%d account(s) are waiting for approval. Review them in the Accounts tab so people can start using the drive.",
+                    s.pendingAccounts()));
+        }
         if (!s.optimizerHasRun()) {
             advice.add("The storage optimizer has not run since the server started. Run it from this page to archive files that are no longer used.");
         }

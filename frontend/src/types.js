@@ -46,6 +46,9 @@
 /**
  * The admin's storage summary, written by an AI or, as a fallback, by the built-in summarizer.
  * @typedef {Object} InsightsReport
+ * @property {string | null} status OK, ATTENTION or CRITICAL
+ * @property {string | null} headline The single most important point
+ * @property {string[]} findings What the numbers show
  * @property {string} summary
  * @property {string[]} suggestions
  * @property {'AI' | 'BUILT_IN'} source

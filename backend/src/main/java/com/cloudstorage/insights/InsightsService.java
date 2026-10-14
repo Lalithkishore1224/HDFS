@@ -27,13 +27,42 @@ public class InsightsService {
     private static final Duration CACHE_TIME = Duration.ofMinutes(5);
 
     static final String SYSTEM_PROMPT = """
-            You are an assistant for the administrator of a cloud file storage system.
-            You only receive aggregate storage statistics. Write a short plain-language summary and exactly
-            three practical suggestions about storage usage and performance.
-            Rules: use only the numbers provided; never invent numbers, file names or users; keep every
-            sentence short; do not mention that you are an AI.
+            You are a storage-operations analyst advising the administrator of a self-hosted cloud file storage
+            system (a Google-Drive-like service). Analyse the numbers like an engineer; do not just repeat them.
+
+            How the system works, so you can reason about the numbers:
+            - Every file is cut into chunks; each chunk is kept on several storage nodes (the replication factor),
+              so a node can fail without any file becoming unreadable.
+            - A background optimizer archives ("cold") files that are unlikely to be opened again by compressing
+              them. It uses a prediction model and a threshold: a higher threshold archives more files.
+            - Opening an archived file first restores it, which makes that download slower. Restores happen only
+              for files that were archived and then needed again.
+            - Users never see tiers or nodes; only the administrator does.
+
+            You receive only aggregate numbers: no file names, folder names, contents or personal data.
+
+            Your task:
+            1. Judge overall health across four areas: redundancy (nodes online against the replication factor,
+               chunks with too few copies), performance (time to start a download, share of downloads that waited
+               on a restore), efficiency (space saved, share of files archived, optimizer activity) and accounts
+               (anyone waiting for approval).
+            2. Say what matters most right now and why, using the numbers as evidence. Explain the likely cause,
+               not only the symptom. If the data is too small or too new to conclude, say that plainly.
+            3. Give practical suggestions. Each one must name a concrete action, cite the number that justifies it
+               and say what improvement to expect. Order them by importance. Do not suggest what is already done.
+
+            Rules: use only the numbers provided; never invent numbers, file names, users or events; do not
+            repeat the same fact in several places; keep sentences short and in plain language for a
+            non-specialist administrator; do not mention that you are an AI.
+
             Reply with JSON only, in exactly this shape and nothing else:
-            {"summary": "<2 to 4 sentences>", "suggestions": ["<one sentence>", "<one sentence>", "<one sentence>"]}
+            {"status": "OK" | "ATTENTION" | "CRITICAL",
+             "headline": "<one sentence with the single most important point>",
+             "summary": "<3 to 5 sentences: what is going on and why>",
+             "findings": ["<one fact with its number>", "... 3 to 5 items covering redundancy, performance, efficiency, accounts"],
+             "suggestions": ["<action> - <why, citing a number> - <expected effect>", "... 3 to 5 items, most important first"]}
+            Use "OK" when nothing needs action, "ATTENTION" when something should be done soon, and "CRITICAL"
+            when files are at risk or users are being hurt right now.
             """;
 
     private final StorageSnapshotProvider snapshots;
@@ -78,7 +107,7 @@ public class InsightsService {
 
     /** Package-visible so tests can check exactly what would be sent. */
     static String buildUserPrompt(StorageSnapshot s) {
-        return String.format(Locale.ROOT, """
+        StringBuilder text = new StringBuilder(String.format(Locale.ROOT, """
                         Storage statistics:
                         - files: %d (hot: %d, cold/archived: %d)
                         - size as users see it: %d bytes
@@ -96,7 +125,36 @@ public class InsightsService {
                 s.averageResponseMs(), s.optimizerThreshold(),
                 s.optimizerHasRun()
                         ? String.format(Locale.ROOT, "archived %d files, promoted %d files", s.lastRunMovedToCold(), s.lastRunMovedToHot())
-                        : "has not run since the server started");
+                        : "has not run since the server started"));
+
+        text.append(String.format(Locale.ROOT, """
+
+                Derived figures:
+                - average file size: %d bytes
+                - share of files archived: %.1f%%
+                """, s.averageFileBytes(), s.coldFilePercent()));
+
+        if (s.clusterKnown()) {
+            text.append(String.format(Locale.ROOT, """
+
+                    Storage nodes:
+                    - nodes: %d (serving: %d)
+                    - copies kept of every chunk (replication factor): %d
+                    - chunks stored: %d
+                    - chunks with fewer copies than wanted: %d
+                    - more nodes that could fail with every file still readable: %d
+                    """, s.storageNodes(), s.nodesOnline(), s.replicationFactor(), s.chunks(),
+                    s.underReplicatedChunks(), s.nodesThatCanFail()));
+        }
+        if (s.accountsKnown()) {
+            text.append(String.format(Locale.ROOT, """
+
+                    Accounts:
+                    - accounts: %d (waiting for approval: %d)
+                    - storage allowance per account: %d bytes
+                    """, s.accounts(), s.pendingAccounts(), s.quotaBytesPerAccount()));
+        }
+        return text.toString();
     }
 
     private InsightsReport parse(String answer, Instant now) {
@@ -104,20 +162,40 @@ public class InsightsService {
         try {
             JsonNode root = json.readTree(cleaned);
             String summary = root.path("summary").asText("").strip();
-            List<String> suggestions = new ArrayList<>();
-            root.path("suggestions").forEach(node -> {
-                String text = node.asText("").strip();
-                if (!text.isEmpty()) {
-                    suggestions.add(text);
-                }
-            });
             if (!summary.isEmpty()) {
-                return new InsightsReport(summary, List.copyOf(suggestions), InsightsReport.Source.AI, ai.modelName(), null, now);
+                return new InsightsReport(
+                        status(root.path("status").asText("")),
+                        blankToNull(root.path("headline").asText("")),
+                        summary,
+                        texts(root.path("findings")),
+                        texts(root.path("suggestions")),
+                        InsightsReport.Source.AI, ai.modelName(), null, now);
             }
         } catch (Exception ignored) {
             // not JSON: fall through and show the text as it is
         }
-        return new InsightsReport(answer.strip(), List.of(), InsightsReport.Source.AI, ai.modelName(), null, now);
+        return new InsightsReport(null, null, answer.strip(), List.of(), List.of(),
+                InsightsReport.Source.AI, ai.modelName(), null, now);
+    }
+
+    private static List<String> texts(JsonNode array) {
+        List<String> items = new ArrayList<>();
+        array.forEach(node -> {
+            String text = node.asText("").strip();
+            if (!text.isEmpty()) {
+                items.add(text);
+            }
+        });
+        return List.copyOf(items);
+    }
+
+    private static String status(String value) {
+        String upper = value.strip().toUpperCase(Locale.ROOT);
+        return upper.equals("OK") || upper.equals("ATTENTION") || upper.equals("CRITICAL") ? upper : null;
+    }
+
+    private static String blankToNull(String value) {
+        return value.isBlank() ? null : value.strip();
     }
 
     private static String stripFences(String text) {
@@ -134,7 +212,10 @@ public class InsightsService {
 
     private static InsightsReport builtIn(StorageSnapshot snapshot, Instant now, String note) {
         return new InsightsReport(
+                BuiltInSummarizer.status(snapshot),
+                BuiltInSummarizer.headline(snapshot),
                 BuiltInSummarizer.summary(snapshot),
+                BuiltInSummarizer.findings(snapshot),
                 BuiltInSummarizer.suggestions(snapshot),
                 InsightsReport.Source.BUILT_IN,
                 null,

@@ -184,4 +184,58 @@ class InsightsServiceTest {
                 .contains("has not run")                 // optimizer never ran
                 .contains("40% of downloads waited");    // restore rate is high
     }
+
+    private static StorageSnapshot withCluster(int nodes, int online, long underReplicated, int canFail, long pending) {
+        return new StorageSnapshot(12, 7, 5, 6_384_480, 2_115_024, 35, 1, 12.0, 0.4,
+                Instant.parse("2026-10-11T09:00:00Z"), 5, 0,
+                nodes, online, 3, 33, underReplicated, canFail, 4, pending, 1_073_741_824L);
+    }
+
+    @Test
+    void theRichAnswerKeepsTheStatusHeadlineFindingsAndSuggestions() {
+        ai.answer = """
+                {"status":"attention","headline":"One node is down.","summary":"Two nodes are left with spare capacity.",
+                 "findings":["Redundancy: 4 of 5 nodes serving.","Performance: 12 ms to start."],
+                 "suggestions":["Bring the node back - 4 of 5 serve - restores full safety."]}""";
+
+        InsightsReport report = service(withCluster(5, 4, 0, 1, 0)).summarise();
+
+        assertThat(report.status()).isEqualTo("ATTENTION");
+        assertThat(report.headline()).isEqualTo("One node is down.");
+        assertThat(report.findings()).hasSize(2);
+        assertThat(report.suggestions()).hasSize(1);
+    }
+
+    @Test
+    void anUnknownStatusIsDropped() {
+        ai.answer = "{\"status\":\"great\",\"summary\":\"S\",\"suggestions\":[]}";
+
+        assertThat(service(snapshot(35, 1)).summarise().status()).isNull();
+    }
+
+    @Test
+    void theClusterAndAccountNumbersAreSentWhenKnown() {
+        ai.answer = "{\"summary\":\"S\"}";
+        service(withCluster(5, 4, 2, 1, 1)).summarise();
+
+        assertThat(ai.lastUserPrompt.get())
+                .contains("nodes: 5 (serving: 4)")
+                .contains("replication factor): 3")
+                .contains("chunks with fewer copies than wanted: 2")
+                .contains("accounts: 4 (waiting for approval: 1)")
+                .contains("share of files archived: 41.7%")
+                .doesNotContain("@")
+                .doesNotContain(".csv");
+    }
+
+    @Test
+    void theBuiltInStatusFollowsRedundancyAndPerformance() {
+        assertThat(BuiltInSummarizer.status(withCluster(5, 5, 0, 2, 0))).isEqualTo("OK");
+        assertThat(BuiltInSummarizer.status(withCluster(5, 4, 0, 1, 0))).isEqualTo("ATTENTION");
+        assertThat(BuiltInSummarizer.status(withCluster(5, 3, 7, 0, 0))).isEqualTo("CRITICAL");
+        assertThat(BuiltInSummarizer.headline(withCluster(5, 4, 0, 1, 0))).contains("1 of 5 storage nodes are not serving");
+        assertThat(BuiltInSummarizer.findings(withCluster(5, 5, 0, 2, 1)))
+                .anyMatch(f -> f.startsWith("Redundancy:"))
+                .anyMatch(f -> f.contains("1 of 4 are waiting for approval"));
+    }
 }
