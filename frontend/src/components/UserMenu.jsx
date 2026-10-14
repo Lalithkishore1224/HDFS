@@ -1,24 +1,18 @@
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { Account } from '../types';
+
 import { Avatar } from './Avatar';
 
-interface UserMenuProps {
-  account: Account;
-  pendingCount: number;
-  onSignOut: () => void;
-}
-
-export function UserMenu({ account, pendingCount, onSignOut }: UserMenuProps) {
+export function UserMenu({ account, pendingCount, onSignOut }) {
   const [open, setOpen] = useState(false);
-  const container = useRef<HTMLDivElement>(null);
+  const container = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!container.current?.contains(event.target as Node)) setOpen(false);
+    const closeOnOutsideClick = (event) => {
+      if (!container.current?.contains(event.target)) setOpen(false);
     };
-    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    const closeOnEscape = (event) => event.key === 'Escape' && setOpen(false);
     document.addEventListener('mousedown', closeOnOutsideClick);
     document.addEventListener('keydown', closeOnEscape);
     return () => {
@@ -29,7 +23,13 @@ export function UserMenu({ account, pendingCount, onSignOut }: UserMenuProps) {
 
   return (
     <div className="user-menu" ref={container}>
-      <button className="avatar-button" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} aria-label="Account menu">
+      <button
+        className="avatar-button"
+        onClick={() => setOpen(!open)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+      >
         <Avatar account={account} size={36} />
         {pendingCount > 0 && <span className="avatar-badge">{pendingCount}</span>}
       </button>

@@ -2,16 +2,15 @@ import { Plus, Wrench } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { formatBytes } from '../lib/format';
-import type { ClusterStatus } from '../types';
 
 /**
  * The storage nodes behind the drive. Files are cut into chunks and every chunk is kept on several
  * nodes, so nodes can fail (or be added) without any file becoming unavailable.
  */
 export function StorageNodesPanel() {
-  const [cluster, setCluster] = useState<ClusterStatus | null>(null);
+  const [cluster, setCluster] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -25,7 +24,7 @@ export function StorageNodesPanel() {
     void load();
   }, [load]);
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action) => {
     setBusy(true);
     setMessage(null);
     try {
@@ -49,9 +48,7 @@ export function StorageNodesPanel() {
           <p className="muted">
             {cluster.files} files in {cluster.chunks} chunks; each chunk is kept on {cluster.replicationFactor} of{' '}
             {cluster.nodes.length} nodes. {onlineNodes} online.{' '}
-            {cluster.underReplicatedChunks > 0
-              ? `${cluster.underReplicatedChunks} chunks are being re-copied. `
-              : ''}
+            {cluster.underReplicatedChunks > 0 ? `${cluster.underReplicatedChunks} chunks are being re-copied. ` : ''}
             {cluster.nodesThatCanFail === 0
               ? 'No further node can fail without making a file unavailable.'
               : `${cluster.nodesThatCanFail} more ${cluster.nodesThatCanFail === 1 ? 'node' : 'nodes'} can fail and every file stays available.`}
@@ -59,7 +56,11 @@ export function StorageNodesPanel() {
         </div>
         <div className="toolbar-actions">
           {!cluster.separateProcesses && (
-            <button className="button button-outline" disabled={busy} onClick={() => void run(() => api.addStorageNode())}>
+            <button
+              className="button button-outline"
+              disabled={busy}
+              onClick={() => void run(() => api.addStorageNode())}
+            >
               <Plus size={16} strokeWidth={2} />
               Add node
             </button>
@@ -67,10 +68,12 @@ export function StorageNodesPanel() {
           <button
             className="button button-primary"
             disabled={busy}
-            onClick={() => void run(async () => {
-              const result = await api.repairStorage();
-              setMessage(`Repair made ${result.copiesMade} new ${result.copiesMade === 1 ? 'copy' : 'copies'}.`);
-            })}
+            onClick={() =>
+              void run(async () => {
+                const result = await api.repairStorage();
+                setMessage(`Repair made ${result.copiesMade} new ${result.copiesMade === 1 ? 'copy' : 'copies'}.`);
+              })
+            }
           >
             <Wrench size={16} strokeWidth={2} />
             Repair copies
@@ -80,7 +83,13 @@ export function StorageNodesPanel() {
 
       <table className="nodes-table">
         <thead>
-          <tr><th>Node</th><th>Status</th><th>Chunks</th><th>Stored</th><th /></tr>
+          <tr>
+            <th>Node</th>
+            <th>Status</th>
+            <th>Chunks</th>
+            <th>Stored</th>
+            <th />
+          </tr>
         </thead>
         <tbody>
           {cluster.nodes.map((node) => (
@@ -109,7 +118,11 @@ export function StorageNodesPanel() {
           ))}
         </tbody>
       </table>
-      {message && <p className="muted nodes-message" role="status">{message}</p>}
+      {message && (
+        <p className="muted nodes-message" role="status">
+          {message}
+        </p>
+      )}
     </section>
   );
 }

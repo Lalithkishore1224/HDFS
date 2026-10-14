@@ -2,16 +2,15 @@ import { Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../api/client';
 import { formatRelativeTime } from '../lib/format';
-import type { InsightsReport } from '../types';
 
 /**
  * "Summarise": asks the server for a plain-language summary of the storage numbers.
  * Only aggregate numbers are used on the server side; file and folder names are never involved.
  */
 export function InsightsPanel() {
-  const [report, setReport] = useState<InsightsReport | null>(null);
+  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const summarise = async () => {
     setLoading(true);
@@ -31,8 +30,8 @@ export function InsightsPanel() {
         <div>
           <h2>Storage summary</h2>
           <p className="muted">
-            A short explanation of the numbers above, with a few suggestions. Only totals are used, never file names
-            or contents. Nothing is changed automatically.
+            A short explanation of the numbers above, with a few suggestions. Only totals are used, never file names or
+            contents. Nothing is changed automatically.
           </p>
         </div>
         <button className="button button-primary" onClick={() => void summarise()} disabled={loading}>
@@ -41,7 +40,11 @@ export function InsightsPanel() {
         </button>
       </div>
 
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {report && (
         <div className="insight-result">

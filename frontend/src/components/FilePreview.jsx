@@ -2,28 +2,18 @@ import { ChevronLeft, ChevronRight, Download, FileQuestion, X } from 'lucide-rea
 import { useEffect, useMemo, useState } from 'react';
 import { formatBytes, formatRelativeTime } from '../lib/format';
 import { MAX_TEXT_PREVIEW_BYTES, parseDelimited, previewKindFor } from '../lib/preview';
-import type { DriveFile } from '../types';
+
 import { FileIcon } from './FileIcon';
 
-interface FilePreviewProps {
-  /** Every file in the folder being viewed, so the viewer can step to the next and previous one. */
-  files: DriveFile[];
-  currentId: string;
-  viewUrl: (id: string) => string;
-  downloadUrl: (id: string) => string;
-  onChange: (id: string) => void;
-  onClose: () => void;
-}
-
 /** Full-screen viewer. Every file can be opened; types the browser cannot render show its details instead. */
-export function FilePreview({ files, currentId, viewUrl, downloadUrl, onChange, onClose }: FilePreviewProps) {
+export function FilePreview({ files, currentId, viewUrl, downloadUrl, onChange, onClose }) {
   const index = files.findIndex((file) => file.id === currentId);
   const file = files[index];
   const previous = index > 0 ? files[index - 1] : null;
   const next = index >= 0 && index < files.length - 1 ? files[index + 1] : null;
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (event) => {
       if (event.key === 'Escape') onClose();
       if (event.key === 'ArrowLeft' && previous) onChange(previous.id);
       if (event.key === 'ArrowRight' && next) onChange(next.id);
@@ -41,15 +31,27 @@ export function FilePreview({ files, currentId, viewUrl, downloadUrl, onChange, 
           <X size={22} strokeWidth={1.75} />
         </button>
         <FileIcon name={file.name} />
-        <h2 className="viewer-title" title={file.name}>{file.name}</h2>
-        <a className="icon-button viewer-icon" href={downloadUrl(file.id)} download aria-label={`Download ${file.name}`} title="Download">
+        <h2 className="viewer-title" title={file.name}>
+          {file.name}
+        </h2>
+        <a
+          className="icon-button viewer-icon"
+          href={downloadUrl(file.id)}
+          download
+          aria-label={`Download ${file.name}`}
+          title="Download"
+        >
           <Download size={22} strokeWidth={1.75} />
         </a>
       </header>
 
       <div className="viewer-stage" onClick={(event) => event.target === event.currentTarget && onClose()}>
         {previous && (
-          <button className="viewer-nav viewer-nav-previous" onClick={() => onChange(previous.id)} aria-label="Previous file">
+          <button
+            className="viewer-nav viewer-nav-previous"
+            onClick={() => onChange(previous.id)}
+            aria-label="Previous file"
+          >
             <ChevronLeft size={28} strokeWidth={1.75} />
           </button>
         )}
@@ -66,13 +68,7 @@ export function FilePreview({ files, currentId, viewUrl, downloadUrl, onChange, 
   );
 }
 
-interface PreviewBodyProps {
-  file: DriveFile;
-  viewUrl: (id: string) => string;
-  downloadUrl: (id: string) => string;
-}
-
-function PreviewBody({ file, viewUrl, downloadUrl }: PreviewBodyProps) {
+function PreviewBody({ file, viewUrl, downloadUrl }) {
   const kind = previewKindFor(file.name);
   const url = viewUrl(file.id);
 
@@ -95,15 +91,15 @@ function PreviewBody({ file, viewUrl, downloadUrl }: PreviewBodyProps) {
     case 'csv':
       return <TextPreview file={file} url={url} delimited={kind === 'csv'} downloadUrl={downloadUrl} />;
     default:
-      return <NoPreview file={file} downloadUrl={downloadUrl} reason="This file type can't be previewed in the browser." />;
+      return (
+        <NoPreview file={file} downloadUrl={downloadUrl} reason="This file type can't be previewed in the browser." />
+      );
   }
 }
 
-type TextState = { status: 'loading' } | { status: 'ready'; text: string } | { status: 'error'; message: string };
-
-function TextPreview({ file, url, delimited, downloadUrl }: { file: DriveFile; url: string; delimited: boolean; downloadUrl: (id: string) => string }) {
+function TextPreview({ file, url, delimited, downloadUrl }) {
   const tooLarge = file.sizeBytes > MAX_TEXT_PREVIEW_BYTES;
-  const [state, setState] = useState<TextState>({ status: 'loading' });
+  const [state, setState] = useState({ status: 'loading' });
 
   useEffect(() => {
     if (tooLarge) return;
@@ -113,7 +109,7 @@ function TextPreview({ file, url, delimited, downloadUrl }: { file: DriveFile; u
         if (!response.ok) throw new Error(`Could not load the file (${response.status})`);
         setState({ status: 'ready', text: await response.text() });
       })
-      .catch((error: unknown) => {
+      .catch((error) => {
         if (!controller.signal.aborted) {
           setState({ status: 'error', message: error instanceof Error ? error.message : 'Could not load the file' });
         }
@@ -122,7 +118,13 @@ function TextPreview({ file, url, delimited, downloadUrl }: { file: DriveFile; u
   }, [url, tooLarge]);
 
   if (tooLarge) {
-    return <NoPreview file={file} downloadUrl={downloadUrl} reason={`This file is larger than ${formatBytes(MAX_TEXT_PREVIEW_BYTES)}, too big to show here.`} />;
+    return (
+      <NoPreview
+        file={file}
+        downloadUrl={downloadUrl}
+        reason={`This file is larger than ${formatBytes(MAX_TEXT_PREVIEW_BYTES)}, too big to show here.`}
+      />
+    );
   }
   if (state.status === 'loading') return <p className="viewer-message">Loading…</p>;
   if (state.status === 'error') return <p className="viewer-message">{state.message}</p>;
@@ -136,7 +138,7 @@ function TextPreview({ file, url, delimited, downloadUrl }: { file: DriveFile; u
 
 const MAX_TABLE_ROWS = 1000;
 
-function DelimitedTable({ text, delimiter }: { text: string; delimiter: string }) {
+function DelimitedTable({ text, delimiter }) {
   const rows = useMemo(() => parseDelimited(text, delimiter), [text, delimiter]);
   if (rows.length === 0) return <p className="viewer-message">(empty file)</p>;
 
@@ -147,30 +149,46 @@ function DelimitedTable({ text, delimiter }: { text: string; delimiter: string }
     <div className="viewer-table-wrap">
       <table className="viewer-table">
         <thead>
-          <tr>{header.map((cell, i) => <th key={i}>{cell}</th>)}</tr>
+          <tr>
+            {header.map((cell, i) => (
+              <th key={i}>{cell}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {shown.map((row, r) => (
-            <tr key={r}>{row.map((cell, c) => <td key={c}>{cell}</td>)}</tr>
+            <tr key={r}>
+              {row.map((cell, c) => (
+                <td key={c}>{cell}</td>
+              ))}
+            </tr>
           ))}
         </tbody>
       </table>
       {body.length > shown.length && (
-        <p className="viewer-table-note">Showing the first {MAX_TABLE_ROWS} of {body.length} rows. Download the file to see everything.</p>
+        <p className="viewer-table-note">
+          Showing the first {MAX_TABLE_ROWS} of {body.length} rows. Download the file to see everything.
+        </p>
       )}
     </div>
   );
 }
 
-function NoPreview({ file, reason, downloadUrl }: { file: DriveFile; reason: string; downloadUrl: (id: string) => string }) {
+function NoPreview({ file, reason, downloadUrl }) {
   return (
     <div className="viewer-card">
       <FileQuestion size={48} strokeWidth={1.25} className="viewer-card-icon" />
       <p className="viewer-card-name">{file.name}</p>
       <p className="muted">{reason}</p>
       <dl className="viewer-facts">
-        <div><dt>Size</dt><dd>{formatBytes(file.sizeBytes)}</dd></div>
-        <div><dt>Last opened</dt><dd>{formatRelativeTime(file.lastAccessedAt)}</dd></div>
+        <div>
+          <dt>Size</dt>
+          <dd>{formatBytes(file.sizeBytes)}</dd>
+        </div>
+        <div>
+          <dt>Last opened</dt>
+          <dd>{formatRelativeTime(file.lastAccessedAt)}</dd>
+        </div>
       </dl>
       <a className="button button-primary" href={downloadUrl(file.id)} download>
         <Download size={18} strokeWidth={1.75} />

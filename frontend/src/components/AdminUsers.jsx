@@ -2,30 +2,28 @@ import { Check, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { formatBytes, formatRelativeTime } from '../lib/format';
-import type { AccountStatus, ManagedAccount } from '../types';
+
 import { Avatar } from './Avatar';
 
-type Filter = AccountStatus | 'ALL';
-
-const FILTERS: { value: Filter; label: string }[] = [
+const FILTERS = [
   { value: 'PENDING', label: 'Waiting' },
   { value: 'APPROVED', label: 'Approved' },
   { value: 'REJECTED', label: 'Rejected' },
   { value: 'ALL', label: 'Everyone' },
 ];
 
-const STATUS_LABELS: Record<AccountStatus, string> = {
+const STATUS_LABELS = {
   PENDING: 'Waiting',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
 };
 
 /** The approval queue: who has signed up, and the decision for each person. */
-export function AdminUsers({ onChanged }: { onChanged: () => void }) {
-  const [filter, setFilter] = useState<Filter>('PENDING');
-  const [accounts, setAccounts] = useState<ManagedAccount[]>([]);
+export function AdminUsers({ onChanged }) {
+  const [filter, setFilter] = useState('PENDING');
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -42,7 +40,7 @@ export function AdminUsers({ onChanged }: { onChanged: () => void }) {
     void load();
   }, [load]);
 
-  const decide = async (id: string, decision: 'approve' | 'reject') => {
+  const decide = async (id, decision) => {
     try {
       await (decision === 'approve' ? api.approveAccount(id) : api.rejectAccount(id));
     } catch (e) {
@@ -68,7 +66,11 @@ export function AdminUsers({ onChanged }: { onChanged: () => void }) {
         ))}
       </div>
 
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {accounts.length === 0 ? (
         !loading && (
@@ -106,7 +108,9 @@ export function AdminUsers({ onChanged }: { onChanged: () => void }) {
                   </div>
                 </td>
                 <td className="col-status">
-                  <span className={`status-chip status-${account.status.toLowerCase()}`}>{STATUS_LABELS[account.status]}</span>
+                  <span className={`status-chip status-${account.status.toLowerCase()}`}>
+                    {STATUS_LABELS[account.status]}
+                  </span>
                 </td>
                 <td className="col-joined">{formatRelativeTime(account.createdAt)}</td>
                 <td className="col-used">{formatBytes(usedBytes)}</td>
@@ -114,13 +118,19 @@ export function AdminUsers({ onChanged }: { onChanged: () => void }) {
                   {account.role !== 'ADMIN' && (
                     <div className="decision-actions">
                       {account.status !== 'APPROVED' && (
-                        <button className="button button-primary button-small" onClick={() => void decide(account.id, 'approve')}>
+                        <button
+                          className="button button-primary button-small"
+                          onClick={() => void decide(account.id, 'approve')}
+                        >
                           <Check size={16} strokeWidth={2} />
                           Approve
                         </button>
                       )}
                       {account.status !== 'REJECTED' && (
-                        <button className="button button-outline button-small" onClick={() => void decide(account.id, 'reject')}>
+                        <button
+                          className="button button-outline button-small"
+                          onClick={() => void decide(account.id, 'reject')}
+                        >
                           <X size={16} strokeWidth={2} />
                           {account.status === 'APPROVED' ? 'Revoke' : 'Reject'}
                         </button>

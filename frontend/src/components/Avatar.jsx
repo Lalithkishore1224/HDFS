@@ -1,7 +1,5 @@
-import type { Account } from '../types';
-
 /** The Google profile picture, or the person's initial when there is none. */
-export function Avatar({ account, size = 32 }: { account: Pick<Account, 'name' | 'email' | 'pictureUrl'>; size?: number }) {
+export function Avatar({ account, size = 32 }) {
   const initial = (account.name || account.email).trim().charAt(0).toUpperCase();
   const style = { width: size, height: size, fontSize: size * 0.45 };
 

@@ -1,40 +1,22 @@
 import { Download, Eye, Folder, FolderInput, FolderOpen, GripVertical, Pencil, Trash2 } from 'lucide-react';
-import { useState, type DragEvent } from 'react';
-import { isFileDrag, isItemDrag, readDraggedItem, startItemDrag, type DraggedItem } from '../lib/dragdrop';
+import { useState } from 'react';
+import { isFileDrag, isItemDrag, readDraggedItem, startItemDrag } from '../lib/dragdrop';
 import { formatBytes, formatRelativeTime } from '../lib/format';
-import type { DriveFile, FolderItem } from '../types';
+
 import { FileIcon } from './FileIcon';
 import { RowMenu } from './RowMenu';
 
-interface FileTableProps {
-  folders: FolderItem[];
-  files: DriveFile[];
-  downloadUrl: (id: string) => string;
-  onOpenFolder: (folder: FolderItem) => void;
-  onViewFile: (file: DriveFile) => void;
-  onRenameFolder: (folder: FolderItem) => void;
-  onMoveFolder: (folder: FolderItem) => void;
-  onDeleteFolder: (folder: FolderItem) => void;
-  onRenameFile: (file: DriveFile) => void;
-  onMoveFile: (file: DriveFile) => void;
-  onDeleteFile: (file: DriveFile) => void;
-  /** An item from the drive was dropped onto a folder row. */
-  onMoveItem: (item: DraggedItem, destinationFolderId: string) => void;
-  /** Files from the computer were dropped onto a folder row. */
-  onUploadToFolder: (files: FileList, folderId: string) => void;
-}
-
-const ICON = { size: 18, strokeWidth: 1.75 } as const;
+const ICON = { size: 18, strokeWidth: 1.75 };
 
 /** Folders first, then files, in one table like a file manager. */
-export function FileTable(props: FileTableProps) {
+export function FileTable(props) {
   const { folders, files, downloadUrl } = props;
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState(null);
+  const [draggedId, setDraggedId] = useState(null);
 
-  const dragHandlers = (item: DraggedItem, label: string) => ({
+  const dragHandlers = (item, label) => ({
     draggable: true,
-    onDragStart: (event: DragEvent) => {
+    onDragStart: (event) => {
       startItemDrag(event, item, label);
       setDraggedId(item.id);
     },
@@ -44,18 +26,18 @@ export function FileTable(props: FileTableProps) {
     },
   });
 
-  const dropHandlers = (folder: FolderItem) => ({
-    onDragOver: (event: DragEvent) => {
+  const dropHandlers = (folder) => ({
+    onDragOver: (event) => {
       if (isItemDrag(event) || isFileDrag(event)) {
         event.preventDefault();
         event.dataTransfer.dropEffect = isItemDrag(event) ? 'move' : 'copy';
         setDropTargetId(folder.id);
       }
     },
-    onDragLeave: (event: DragEvent) => {
-      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTargetId(null);
+    onDragLeave: (event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) setDropTargetId(null);
     },
-    onDrop: (event: DragEvent) => {
+    onDrop: (event) => {
       setDropTargetId(null);
       const item = readDraggedItem(event);
       if (item) {
@@ -99,9 +81,21 @@ export function FileTable(props: FileTableProps) {
               <td>
                 <button className="folder-link" onClick={() => props.onOpenFolder(folder)} title={folder.name}>
                   {isTarget ? (
-                    <FolderOpen className="file-icon icon-folder" size={20} strokeWidth={0} fill="currentColor" aria-hidden />
+                    <FolderOpen
+                      className="file-icon icon-folder"
+                      size={20}
+                      strokeWidth={0}
+                      fill="currentColor"
+                      aria-hidden
+                    />
                   ) : (
-                    <Folder className="file-icon icon-folder" size={20} strokeWidth={0} fill="currentColor" aria-hidden />
+                    <Folder
+                      className="file-icon icon-folder"
+                      size={20}
+                      strokeWidth={0}
+                      fill="currentColor"
+                      aria-hidden
+                    />
                   )}
                   <span className="name-block">
                     <span className="name-text">{folder.name}</span>
@@ -128,7 +122,12 @@ export function FileTable(props: FileTableProps) {
                   items={[
                     { label: 'Rename', icon: <Pencil {...ICON} />, onSelect: () => props.onRenameFolder(folder) },
                     { label: 'Move', icon: <FolderInput {...ICON} />, onSelect: () => props.onMoveFolder(folder) },
-                    { label: 'Delete', icon: <Trash2 {...ICON} />, onSelect: () => props.onDeleteFolder(folder), danger: true },
+                    {
+                      label: 'Delete',
+                      icon: <Trash2 {...ICON} />,
+                      onSelect: () => props.onDeleteFolder(folder),
+                      danger: true,
+                    },
                   ]}
                 />
               </td>
@@ -146,7 +145,11 @@ export function FileTable(props: FileTableProps) {
               <GripVertical className="grip" size={18} strokeWidth={1.75} aria-hidden />
             </td>
             <td>
-              <button className="folder-link file-link" onClick={() => props.onViewFile(file)} title={`View ${file.name}`}>
+              <button
+                className="folder-link file-link"
+                onClick={() => props.onViewFile(file)}
+                title={`View ${file.name}`}
+              >
                 <FileIcon name={file.name} />
                 <span className="name-block">
                   <span className="name-text">{file.name}</span>
@@ -163,7 +166,13 @@ export function FileTable(props: FileTableProps) {
                 <IconButton label={`View ${file.name}`} onClick={() => props.onViewFile(file)}>
                   <Eye {...ICON} />
                 </IconButton>
-                <a className="icon-button" href={downloadUrl(file.id)} download aria-label={`Download ${file.name}`} title="Download">
+                <a
+                  className="icon-button"
+                  href={downloadUrl(file.id)}
+                  download
+                  aria-label={`Download ${file.name}`}
+                  title="Download"
+                >
                   <Download {...ICON} />
                 </a>
                 <IconButton label={`Rename ${file.name}`} onClick={() => props.onRenameFile(file)}>
@@ -183,7 +192,12 @@ export function FileTable(props: FileTableProps) {
                   { label: 'Download', icon: <Download {...ICON} />, href: downloadUrl(file.id) },
                   { label: 'Rename', icon: <Pencil {...ICON} />, onSelect: () => props.onRenameFile(file) },
                   { label: 'Move', icon: <FolderInput {...ICON} />, onSelect: () => props.onMoveFile(file) },
-                  { label: 'Delete', icon: <Trash2 {...ICON} />, onSelect: () => props.onDeleteFile(file), danger: true },
+                  {
+                    label: 'Delete',
+                    icon: <Trash2 {...ICON} />,
+                    onSelect: () => props.onDeleteFile(file),
+                    danger: true,
+                  },
                 ]}
               />
             </td>
@@ -194,7 +208,7 @@ export function FileTable(props: FileTableProps) {
   );
 }
 
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function IconButton({ label, onClick, children }) {
   return (
     <button className="icon-button" onClick={onClick} aria-label={label} title={label.split(' ')[0]}>
       {children}

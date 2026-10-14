@@ -1,14 +1,8 @@
 import { Cloud } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { api } from '../api/client';
-import type { Account, AuthConfig } from '../types';
-import { GoogleLogo } from './GoogleLogo';
 
-interface LoginPageProps {
-  config: AuthConfig;
-  authFailed: boolean;
-  onSignedIn: (account: Account) => void;
-}
+import { GoogleLogo } from './GoogleLogo';
 
 /** Quick identities for the development sign-in; the first matches the administrator in application-dev.yml. */
 const DEV_IDENTITIES = [
@@ -16,7 +10,7 @@ const DEV_IDENTITIES = [
   { email: 'new.user@dev.local', name: 'New User', label: 'New person (needs approval)' },
 ];
 
-export function LoginPage({ config, authFailed, onSignedIn }: LoginPageProps) {
+export function LoginPage({ config, authFailed, onSignedIn }) {
   return (
     <div className="login">
       <div className="login-card">
@@ -45,9 +39,7 @@ export function LoginPage({ config, authFailed, onSignedIn }: LoginPageProps) {
           </p>
         )}
 
-        <p className="login-fineprint">
-          New accounts are reviewed by an administrator before they can use Drive.
-        </p>
+        <p className="login-fineprint">New accounts are reviewed by an administrator before they can use Drive.</p>
 
         {config.devLoginEnabled && <DevSignIn onSignedIn={onSignedIn} />}
       </div>
@@ -55,11 +47,11 @@ export function LoginPage({ config, authFailed, onSignedIn }: LoginPageProps) {
   );
 }
 
-function DevSignIn({ onSignedIn }: { onSignedIn: (account: Account) => void }) {
+function DevSignIn({ onSignedIn }) {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  const signIn = async (address: string, name: string) => {
+  const signIn = async (address, name) => {
     setError(null);
     try {
       onSignedIn(await api.devLogin(address, name));
@@ -68,7 +60,7 @@ function DevSignIn({ onSignedIn }: { onSignedIn: (account: Account) => void }) {
     }
   };
 
-  const submit = (event: FormEvent) => {
+  const submit = (event) => {
     event.preventDefault();
     if (email.trim()) void signIn(email.trim(), email.trim().split('@')[0]);
   };
@@ -97,7 +89,11 @@ function DevSignIn({ onSignedIn }: { onSignedIn: (account: Account) => void }) {
           Sign in
         </button>
       </form>
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

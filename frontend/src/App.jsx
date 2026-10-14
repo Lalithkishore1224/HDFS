@@ -1,5 +1,5 @@
 import { CloudUpload, FolderPlus, Upload } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, api } from './api/client';
 import { Breadcrumbs } from './components/Breadcrumbs';
 import { DeleteDialog, MoveDialog, NameDialog } from './components/Dialogs';
@@ -8,20 +8,10 @@ import { FileTable } from './components/FileTable';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { UserMenu } from './components/UserMenu';
-import type { DraggedItem } from './lib/dragdrop';
-import type { Account, DriveFile, FolderItem, FolderSummary, StorageUsage } from './types';
 
 /** The one modal that may be open at a time, together with the item it acts on. */
-type ActiveDialog =
-  | { kind: 'newFolder' }
-  | { kind: 'renameFile'; file: DriveFile }
-  | { kind: 'renameFolder'; folder: FolderItem }
-  | { kind: 'moveFile'; file: DriveFile }
-  | { kind: 'moveFolder'; folder: FolderItem }
-  | { kind: 'deleteFile'; file: DriveFile }
-  | { kind: 'deleteFolder'; folder: FolderItem };
 
-function useDebounced<T>(value: T, delayMs: number): T {
+function useDebounced(value, delayMs) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(value), delayMs);
@@ -30,31 +20,24 @@ function useDebounced<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-interface AppProps {
-  account: Account;
-  /** Accounts waiting for approval; only meaningful for administrators. */
-  pendingCount: number;
-  onSignOut: () => void;
-}
-
-export function App({ account, pendingCount, onSignOut }: AppProps) {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+export function App({ account, pendingCount, onSignOut }) {
+  const [currentFolderId, setCurrentFolderId] = useState(null);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounced(search, 250);
 
-  const [folders, setFolders] = useState<FolderItem[]>([]);
-  const [path, setPath] = useState<FolderSummary[]>([]);
-  const [files, setFiles] = useState<DriveFile[]>([]);
-  const [usage, setUsage] = useState<StorageUsage | null>(null);
+  const [folders, setFolders] = useState([]);
+  const [path, setPath] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [dialog, setDialog] = useState<ActiveDialog | null>(null);
+  const [dialog, setDialog] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState(null);
+  const [message, setMessage] = useState(null);
 
-  const fileInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef(null);
 
   /** Browsing the folder tree, as opposed to looking at search results. */
   const browsing = !debouncedSearch;
@@ -94,7 +77,7 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
   }, [message]);
 
   /** Runs a mutation, reports its outcome in the snackbar, and reloads the listing. */
-  const act = async (action: () => Promise<unknown>, success?: string) => {
+  const act = async (action, success) => {
     try {
       await action();
       if (success) setMessage(success);
@@ -110,7 +93,7 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
     setNavOpen(false);
   };
 
-  const upload = (selected: FileList | File[], folderId: string | null = currentFolderId) => {
+  const upload = (selected, folderId = currentFolderId) => {
     const list = Array.from(selected);
     if (list.length === 0) return;
     void act(
@@ -119,25 +102,25 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
     );
   };
 
-  const onFilesPicked = (event: ChangeEvent<HTMLInputElement>) => {
+  const onFilesPicked = (event) => {
     if (event.target.files) upload(event.target.files);
     event.target.value = '';
   };
 
-  const onDrop = (event: DragEvent) => {
+  const onDrop = (event) => {
     event.preventDefault();
     setDragging(false);
     upload(event.dataTransfer.files);
   };
 
-  const onDragOver = (event: DragEvent) => {
+  const onDragOver = (event) => {
     if (event.dataTransfer.types.includes('Files')) {
       event.preventDefault();
       setDragging(true);
     }
   };
 
-  const moveItem = (item: DraggedItem, destinationFolderId: string | null) => {
+  const moveItem = (item, destinationFolderId) => {
     const move = item.kind === 'file' ? api.moveFile : api.moveFolder;
     void act(() => move(item.id, destinationFolderId), 'Moved');
   };
@@ -150,7 +133,7 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
   }, [refresh]);
 
   /** Closes the dialog, then runs the action it confirmed. */
-  const confirm = (action: () => Promise<unknown>, success?: string) => {
+  const confirm = (action, success) => {
     setDialog(null);
     void act(action, success);
   };
@@ -194,7 +177,9 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
             itemName={dialog.file.name}
             currentFolderId={dialog.file.folderId}
             onClose={closeDialog}
-            onSubmit={(destination) => confirm(() => api.moveFile(dialog.file.id, destination), `Moved ${dialog.file.name}`)}
+            onSubmit={(destination) =>
+              confirm(() => api.moveFile(dialog.file.id, destination), `Moved ${dialog.file.name}`)
+            }
           />
         );
       case 'moveFolder':
@@ -204,7 +189,9 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
             currentFolderId={dialog.folder.parentId}
             movingFolderId={dialog.folder.id}
             onClose={closeDialog}
-            onSubmit={(destination) => confirm(() => api.moveFolder(dialog.folder.id, destination), `Moved ${dialog.folder.name}`)}
+            onSubmit={(destination) =>
+              confirm(() => api.moveFolder(dialog.folder.id, destination), `Moved ${dialog.folder.name}`)
+            }
           />
         );
       case 'deleteFile':
@@ -336,13 +323,13 @@ export function App({ account, pendingCount, onSignOut }: AppProps) {
   );
 }
 
-function emptyMessage(search: string, insideFolder: boolean): string {
+function emptyMessage(search, insideFolder) {
   if (search) return `No files match “${search}”.`;
   return insideFolder
     ? 'This folder is empty. Drop files here, or use New to add some.'
     : 'Drop files here, or use New to upload a file or create a folder.';
 }
 
-function errorText(error: unknown): string {
+function errorText(error) {
   return error instanceof Error ? error.message : 'Something went wrong';
 }

@@ -1,16 +1,6 @@
 import { Menu, Search, X } from 'lucide-react';
-import type { ReactNode } from 'react';
 
-interface TopBarProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  /** Opens the navigation drawer; only visible on narrow screens. */
-  onMenuClick: () => void;
-  /** Shown at the far right, e.g. the account menu. */
-  trailing?: ReactNode;
-}
-
-export function TopBar({ search, onSearchChange, onMenuClick, trailing }: TopBarProps) {
+export function TopBar({ search, onSearchChange, onMenuClick, trailing }) {
   return (
     <header className="topbar">
       <button className="icon-button menu-toggle" onClick={onMenuClick} aria-label="Open navigation">

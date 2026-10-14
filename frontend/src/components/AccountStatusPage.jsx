@@ -1,17 +1,10 @@
 import { Ban, Hourglass } from 'lucide-react';
 import { useEffect } from 'react';
-import type { Account } from '../types';
-
-interface AccountStatusPageProps {
-  account: Account;
-  onRecheck: () => void;
-  onSignOut: () => void;
-}
 
 const POLL_INTERVAL_MS = 10_000;
 
 /** Shown to people who have signed in but are not (or no longer) allowed to use the drive. */
-export function AccountStatusPage({ account, onRecheck, onSignOut }: AccountStatusPageProps) {
+export function AccountStatusPage({ account, onRecheck, onSignOut }) {
   const waiting = account.status === 'PENDING';
 
   // While waiting, keep asking so access appears as soon as an administrator approves.

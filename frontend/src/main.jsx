@@ -9,19 +9,13 @@ import { AccountStatusPage } from './components/AccountStatusPage';
 import { AdminPage } from './components/AdminPage';
 import { LoginPage } from './components/LoginPage';
 import './styles.css';
-import type { Account, AuthConfig } from './types';
-
-type Session =
-  | { state: 'loading' }
-  | { state: 'signedOut'; config: AuthConfig }
-  | { state: 'signedIn'; account: Account };
 
 /**
  * Decides what to show: the sign-in page, the "waiting for approval" page, the drive, or the admin
  * panel (administrators only; reached with the #/admin address).
  */
 function Root() {
-  const [session, setSession] = useState<Session>({ state: 'loading' });
+  const [session, setSession] = useState({ state: 'loading' });
   const [hash, setHash] = useState(window.location.hash);
   const [pendingCount, setPendingCount] = useState(0);
   const authFailed = new URLSearchParams(window.location.search).has('authError');
@@ -94,7 +88,7 @@ function Root() {
   return <App account={session.account} pendingCount={pendingCount} onSignOut={signOut} />;
 }
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Root />
   </StrictMode>,

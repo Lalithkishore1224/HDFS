@@ -1,18 +1,9 @@
 import { Cloud, FolderPlus, HardDrive, Plus, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { StorageUsage } from '../types';
+
 import { StorageMeter } from './StorageMeter';
 
-interface SidebarProps {
-  usage: StorageUsage | null;
-  /** On narrow screens the sidebar is a drawer; this says whether it is showing. */
-  open: boolean;
-  onGoHome: () => void;
-  onNewFolder: () => void;
-  onUploadClick: () => void;
-}
-
-export function Sidebar({ usage, open, onGoHome, onNewFolder, onUploadClick }: SidebarProps) {
+export function Sidebar({ usage, open, onGoHome, onNewFolder, onUploadClick }) {
   return (
     <aside className={`sidebar ${open ? 'sidebar-open' : ''}`} aria-label="Navigation">
       <div className="brand">
@@ -34,16 +25,16 @@ export function Sidebar({ usage, open, onGoHome, onNewFolder, onUploadClick }: S
   );
 }
 
-function NewMenu({ onNewFolder, onUploadClick }: Pick<SidebarProps, 'onNewFolder' | 'onUploadClick'>) {
+function NewMenu({ onNewFolder, onUploadClick }) {
   const [open, setOpen] = useState(false);
-  const container = useRef<HTMLDivElement>(null);
+  const container = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!container.current?.contains(event.target as Node)) setOpen(false);
+    const closeOnOutsideClick = (event) => {
+      if (!container.current?.contains(event.target)) setOpen(false);
     };
-    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    const closeOnEscape = (event) => event.key === 'Escape' && setOpen(false);
     document.addEventListener('mousedown', closeOnOutsideClick);
     document.addEventListener('keydown', closeOnEscape);
     return () => {
@@ -52,7 +43,7 @@ function NewMenu({ onNewFolder, onUploadClick }: Pick<SidebarProps, 'onNewFolder
     };
   }, [open]);
 
-  const choose = (action: () => void) => () => {
+  const choose = (action) => () => {
     setOpen(false);
     action();
   };

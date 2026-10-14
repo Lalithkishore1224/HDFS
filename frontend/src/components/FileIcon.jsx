@@ -1,7 +1,7 @@
 import { File, FileArchive, FileCode, FileImage, FileSpreadsheet, FileText } from 'lucide-react';
-import { fileKind, type FileKind } from '../lib/format';
+import { fileKind } from '../lib/format';
 
-const ICONS: Record<FileKind, { Icon: typeof File; className: string }> = {
+const ICONS = {
   document: { Icon: FileText, className: 'icon-document' },
   sheet: { Icon: FileSpreadsheet, className: 'icon-sheet' },
   image: { Icon: FileImage, className: 'icon-image' },
@@ -10,7 +10,7 @@ const ICONS: Record<FileKind, { Icon: typeof File; className: string }> = {
   other: { Icon: File, className: 'icon-other' },
 };
 
-export function FileIcon({ name }: { name: string }) {
+export function FileIcon({ name }) {
   const { Icon, className } = ICONS[fileKind(name)];
   return <Icon className={`file-icon ${className}`} size={20} strokeWidth={1.75} aria-hidden />;
 }

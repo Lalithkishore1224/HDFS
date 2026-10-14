@@ -2,22 +2,56 @@
  * How the viewer shows a file. The server makes the final call about what it will serve inline (see
  * PreviewTypes.java); these extension lists mirror it so the UI never asks for something it will refuse.
  */
-export type PreviewKind = 'image' | 'pdf' | 'video' | 'audio' | 'csv' | 'text' | 'none';
 
 const IMAGE = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico', 'avif', 'svg'];
 const VIDEO = ['mp4', 'webm', 'ogv', 'mov'];
 const AUDIO = ['mp3', 'wav', 'ogg', 'm4a', 'flac'];
 const CSV = ['csv', 'tsv'];
 const TEXT = [
-  'txt', 'md', 'markdown', 'json', 'log', 'xml', 'html', 'htm', 'css', 'js', 'mjs', 'ts', 'tsx', 'jsx', 'java', 'kt',
-  'py', 'rb', 'go', 'rs', 'c', 'h', 'cpp', 'hpp', 'cs', 'php', 'sh', 'bash', 'sql', 'yml', 'yaml', 'toml', 'ini',
-  'conf', 'env', 'properties', 'gradle', 'tex',
+  'txt',
+  'md',
+  'markdown',
+  'json',
+  'log',
+  'xml',
+  'html',
+  'htm',
+  'css',
+  'js',
+  'mjs',
+  'ts',
+  'tsx',
+  'jsx',
+  'java',
+  'kt',
+  'py',
+  'rb',
+  'go',
+  'rs',
+  'c',
+  'h',
+  'cpp',
+  'hpp',
+  'cs',
+  'php',
+  'sh',
+  'bash',
+  'sql',
+  'yml',
+  'yaml',
+  'toml',
+  'ini',
+  'conf',
+  'env',
+  'properties',
+  'gradle',
+  'tex',
 ];
 
 /** Text files larger than this are not loaded into the page; they can still be downloaded. */
 export const MAX_TEXT_PREVIEW_BYTES = 2 * 1024 * 1024;
 
-export function previewKindFor(fileName: string): PreviewKind {
+export function previewKindFor(fileName) {
   const dot = fileName.lastIndexOf('.');
   if (dot < 0) return 'none';
   const extension = fileName.slice(dot + 1).toLowerCase();
@@ -35,9 +69,9 @@ export function previewKindFor(fileName: string): PreviewKind {
  * Minimal CSV/TSV reader: handles quoted fields, escaped quotes and newlines inside quotes.
  * Good enough for looking at a file; it is not meant to be a data-import parser.
  */
-export function parseDelimited(text: string, delimiter: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
+export function parseDelimited(text, delimiter) {
+  const rows = [];
+  let row = [];
   let field = '';
   let inQuotes = false;
 
