@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-/** A person who signed in with Google. Created pending; an administrator decides whether they get in. */
+/** A person with a username and password. Created pending; an administrator decides whether they get in. */
 @Entity
 // Uniqueness of subject and email is declared in schema.sql, next to the other indexes.
 @Table(name = "accounts")
@@ -18,17 +18,21 @@ public class UserAccount {
     @Id
     private UUID id;
 
-    /** The identity provider's stable id for this person (Google's {@code sub} claim). */
+    /** The stable identity the session carries: {@code user:<username>} (older accounts keep what they had). */
     @Column(nullable = false)
     private String subject;
 
-    @Column(nullable = false)
+    /** What the person types to sign in; lower-case, unique. Null only for accounts that predate passwords. */
+    private String username;
+
+    /** BCrypt hash of the password. Null for an account that has never had one set (see claiming rules). */
+    private String passwordHash;
+
+    /** Kept for accounts created before username sign-in; not used for new ones. */
     private String email;
 
+    /** What is shown in the app. */
     private String name;
-
-    @Column(length = 1024)
-    private String pictureUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,13 +55,14 @@ public class UserAccount {
         // required by JPA
     }
 
-    public static UserAccount register(SignInProfile profile, AccountRole role, AccountStatus status, Instant now) {
+    public static UserAccount create(String username, String displayName, String passwordHash, AccountRole role,
+                                     AccountStatus status, Instant now) {
         UserAccount account = new UserAccount();
         account.id = UUID.randomUUID();
-        account.subject = profile.subject();
-        account.email = profile.email();
-        account.name = profile.name();
-        account.pictureUrl = profile.pictureUrl();
+        account.subject = "user:" + username;
+        account.username = username;
+        account.passwordHash = passwordHash;
+        account.name = displayName;
         account.role = role;
         account.status = status;
         account.createdAt = now;
@@ -65,10 +70,12 @@ public class UserAccount {
         return account;
     }
 
-    public void refreshProfile(SignInProfile profile) {
-        this.email = profile.email();
-        this.name = profile.name();
-        this.pictureUrl = profile.pictureUrl();
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public boolean hasPassword() {
+        return passwordHash != null;
     }
 
     public void promoteToAdmin(Instant now) {
@@ -106,16 +113,16 @@ public class UserAccount {
         return subject;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getPictureUrl() {
-        return pictureUrl;
     }
 
     public AccountRole getRole() {

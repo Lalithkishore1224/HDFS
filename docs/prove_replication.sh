@@ -11,7 +11,8 @@ cluster() { python3 -c "import sys,json; d=json.load(sys.stdin); [print('   %-7s
 chunks() { python3 -c "import sys,json; d=json.load(sys.stdin); [print('   chunk %d  on %s' % (c['index'], ', '.join(n['name'] + ('' if n['online'] else ' (offline)') for n in c['nodes']))) for c in d['chunks']]"; }
 
 curl -s "$BASE/api/auth/config" -c "$JAR" >/dev/null
-post /api/auth/dev-login -H 'Content-Type: application/json' -d '{"email":"admin@dev.local","name":"Dev Admin"}' >/dev/null
+# DRIVE_USER / DRIVE_PASSWORD: an administrator account
+post /api/auth/login -H 'Content-Type: application/json' -d "{\"username\":\"${DRIVE_USER:?set DRIVE_USER}\",\"password\":\"${DRIVE_PASSWORD:?set DRIVE_PASSWORD}\"}" >/dev/null
 
 head -c 700000 /dev/urandom > /tmp/proof-file.bin
 SUM=$(sha256sum /tmp/proof-file.bin | cut -d' ' -f1)

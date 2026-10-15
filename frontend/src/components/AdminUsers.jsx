@@ -97,10 +97,10 @@ export function AdminUsers({ onChanged }) {
                     <Avatar account={account} size={36} />
                     <div className="person-text">
                       <p className="person-name">
-                        {account.name || account.email}
+                        {account.name || account.username}
                         {account.role === 'ADMIN' && <span className="role-tag">Admin</span>}
                       </p>
-                      <p className="muted person-email">{account.email}</p>
+                      <p className="muted person-email">{account.username}</p>
                       <span className={`status-chip status-${account.status.toLowerCase()} status-inline`}>
                         {STATUS_LABELS[account.status]}
                       </span>

@@ -3,12 +3,11 @@ package com.cloudstorage.account;
 import java.time.Instant;
 import java.util.UUID;
 
-/** An account as shown to its owner (/api/me) and to administrators. */
+/** An account as shown to its owner (/api/me) and to administrators. Never includes the password hash. */
 public record AccountResponse(
         UUID id,
-        String email,
+        String username,
         String name,
-        String pictureUrl,
         AccountRole role,
         AccountStatus status,
         Instant createdAt) {
@@ -16,9 +15,8 @@ public record AccountResponse(
     public static AccountResponse from(UserAccount account) {
         return new AccountResponse(
                 account.getId(),
-                account.getEmail(),
+                account.getUsername(),
                 account.getName(),
-                account.getPictureUrl(),
                 account.getRole(),
                 account.getStatus(),
                 account.getCreatedAt());

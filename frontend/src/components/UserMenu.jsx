@@ -39,8 +39,8 @@ export function UserMenu({ account, pendingCount, onSignOut }) {
           <div className="user-menu-header">
             <Avatar account={account} size={48} />
             <div className="user-menu-identity">
-              <p className="user-menu-name">{account.name || account.email}</p>
-              <p className="muted user-menu-email">{account.email}</p>
+              <p className="user-menu-name">{account.name || account.username}</p>
+              <p className="muted user-menu-email">@{account.username}</p>
             </div>
           </div>
           <hr className="menu-divider" />

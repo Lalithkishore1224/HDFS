@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cloudstorage.account.AccountService;
-import com.cloudstorage.account.SignInProfile;
 import com.cloudstorage.account.UserAccount;
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -24,7 +23,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @SpringBootTest(properties = {
         "storage.seed-demo-data=false",
-        "auth.admin-emails=viewer-admin@example.com"
+        "auth.admin-usernames=viewer-admin"
 })
 @AutoConfigureMockMvc
 class FileViewEndpointTest {
@@ -43,8 +42,9 @@ class FileViewEndpointTest {
     @Autowired
     FileService files;
 
-    private UserAccount approvedAdmin(String email) {
-        return accounts.signIn(new SignInProfile("test:" + email, email, "Viewer", null));
+    private UserAccount approvedAdmin(String username) {
+        return accounts.findBySubject("user:" + username)
+                .orElseGet(() -> accounts.register(username, "correct horse battery"));
     }
 
     private RequestPostProcessor as(UserAccount account) {
@@ -58,7 +58,7 @@ class FileViewEndpointTest {
 
     @Test
     void htmlIsServedAsInlinePlainTextSoItCanNeverRunInTheAppsOrigin() throws Exception {
-        UserAccount owner = approvedAdmin("viewer-admin@example.com");
+        UserAccount owner = approvedAdmin("viewer-admin");
         StoredFile page = upload(owner, "evil.html", "<script>alert(1)</script>");
 
         mvc.perform(get("/api/files/" + page.getId() + "/view").with(as(owner)))
@@ -71,7 +71,7 @@ class FileViewEndpointTest {
 
     @Test
     void svgIsSandboxedByContentSecurityPolicy() throws Exception {
-        UserAccount owner = approvedAdmin("viewer-admin@example.com");
+        UserAccount owner = approvedAdmin("viewer-admin");
         StoredFile image = upload(owner, "logo.svg", "<svg xmlns='http://www.w3.org/2000/svg'/>");
 
         mvc.perform(get("/api/files/" + image.getId() + "/view").with(as(owner)))
@@ -82,7 +82,7 @@ class FileViewEndpointTest {
 
     @Test
     void typesWithoutASafePreviewAreRefusedWithA415() throws Exception {
-        UserAccount owner = approvedAdmin("viewer-admin@example.com");
+        UserAccount owner = approvedAdmin("viewer-admin");
         StoredFile archive = upload(owner, "bundle.zip", "PK");
 
         mvc.perform(get("/api/files/" + archive.getId() + "/view").with(as(owner)))
@@ -91,10 +91,9 @@ class FileViewEndpointTest {
 
     @Test
     void anotherAccountCannotViewSomeoneElsesFile() throws Exception {
-        UserAccount owner = approvedAdmin("viewer-admin@example.com");
+        UserAccount owner = approvedAdmin("viewer-admin");
         StoredFile secret = upload(owner, "private.txt", "secret");
-        UserAccount stranger = accounts.signIn(
-                new SignInProfile("test:stranger", "stranger@example.com", "Stranger", null));
+        UserAccount stranger = accounts.register("stranger", "correct horse battery");
         accounts.approve(owner.getId(), stranger.getId());
 
         mvc.perform(get("/api/files/" + secret.getId() + "/view").with(as(stranger)))

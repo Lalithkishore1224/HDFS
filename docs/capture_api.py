@@ -1,7 +1,9 @@
 """Runs a real session against the live API and records everything needed to document it."""
 import hashlib, http.cookiejar, json, os, subprocess, time, urllib.error, urllib.request, uuid
 
-BASE = 'http://localhost:8080'
+BASE = os.environ.get('BASE', 'http://localhost:8080')
+USER = os.environ.get('DRIVE_USER')          # an administrator account
+PASSWORD = os.environ.get('DRIVE_PASSWORD')
 DATA = os.environ.get('DRIVE_DATA', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend', 'data'))
 LOG = os.environ.get('BACKEND_LOG', 'backend.log')   # the server's log file, started with -Dlogging.level.org.hibernate.SQL=DEBUG
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'capture.json')
@@ -63,7 +65,10 @@ def row(table, ident):
     assert table in TABLES
     uuid.UUID(ident)  # refuses anything that is not a UUID before it reaches SQL
     out = psql(f"select row_to_json(t) from (select * from {table} where id = '{ident}') t")
-    return json.loads(out) if out else None
+    record = json.loads(out) if out else None
+    if record and record.get('password_hash'):
+        record['password_hash'] = '$2a$10$… (a BCrypt hash of the password, shortened here)'
+    return record
 
 
 def multipart(fields, file_field, filename, content, ctype):
@@ -79,12 +84,12 @@ def multipart(fields, file_field, filename, content, ctype):
 steps = []
 
 
-def call(step_id, title, method, path, *, json_body=None, upload=None, auth=True, shows=None, curl=None, note=None):
+def call(step_id, title, method, path, *, json_body=None, upload=None, auth=True, shows=None, curl=None, note=None, real_body=None):
     headers = {}
     data = None
     shown_body = None
     if json_body is not None:
-        data = json.dumps(json_body).encode()
+        data = json.dumps(real_body if real_body is not None else json_body).encode()
         headers['Content-Type'] = 'application/json'
         shown_body = json_body
     if upload is not None:
@@ -154,12 +159,21 @@ def call(step_id, title, method, path, *, json_body=None, upload=None, auth=True
 def main():
     opener.open(BASE + '/api/auth/config').read()
 
-    call('config', 'Ask how people can sign in', 'GET', '/api/auth/config', auth=False,
+    if not USER or not PASSWORD:
+        raise SystemExit('Set DRIVE_USER and DRIVE_PASSWORD to an administrator account (see README).')
+
+    call('config', 'Ask whether new accounts can be created', 'GET', '/api/auth/config', auth=False,
          curl='curl -s "$BASE/api/auth/config"')
-    me = call('login', 'Sign in (development login)', 'POST', '/api/auth/dev-login',
-              json_body={'email': 'admin@dev.local', 'name': 'Dev Admin'},
-              curl='curl -s -X POST "$BASE/api/auth/dev-login" \\\n  -b cookies.txt -c cookies.txt \\\n  -H "X-XSRF-TOKEN: $TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"email":"admin@dev.local","name":"Dev Admin"}\'',
-              shows=lambda b: {'accounts': row('accounts', b['id'])})
+    newcomer = f'docs-{time.strftime("%H%M%S")}'
+    created = call('register', 'Create an account', 'POST', '/api/auth/register',
+                   json_body={'username': newcomer, 'password': 'a long enough password'},
+                   curl='curl -s -X POST "$BASE/api/auth/register" \\\n  -b cookies.txt -c cookies.txt \\\n  -H "X-XSRF-TOKEN: $TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"username":"' + newcomer + '","password":"a long enough password"}\'',
+                   shows=lambda b: {'accounts': row('accounts', b['id'])})
+    psql(f"delete from accounts where id = '{created['id']}'")   # the throwaway account is not kept
+    me = call('login', 'Sign in', 'POST', '/api/auth/login',
+              json_body={'username': USER, 'password': '••••••••'} ,
+              curl='curl -s -X POST "$BASE/api/auth/login" \\\n  -b cookies.txt -c cookies.txt \\\n  -H "X-XSRF-TOKEN: $TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"username":"' + USER + '","password":"<your password>"}\'',
+              shows=lambda b: {'accounts': row('accounts', b['id'])}, real_body={'username': USER, 'password': PASSWORD})
     call('me', 'Who am I?', 'GET', '/api/me', curl='curl -s "$BASE/api/me" -b cookies.txt')
 
     stamp = time.strftime('%H%M%S')

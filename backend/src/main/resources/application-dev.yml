@@ -1,9 +1,9 @@
 # Local development: run with  mvn spring-boot:run -Dspring-boot.run.profiles=dev
-# Adds a password-less sign-in so the approval workflow works without Google credentials.
+# The username "admin" becomes the administrator: choose "Create account" with it and set your own password.
+# The sample drive is created for that account.
 auth:
-  admin-emails:
-    - admin@dev.local
-  dev-login-enabled: true
+  admin-usernames:
+    - admin
 
 storage:
   seed-demo-data: true

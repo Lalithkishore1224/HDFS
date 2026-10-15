@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cloudstorage.TestDatabase;
 import com.cloudstorage.account.AccountService;
-import com.cloudstorage.account.SignInProfile;
 import com.cloudstorage.account.UserAccount;
 import com.cloudstorage.file.FileService;
 import com.cloudstorage.file.StoredFile;
@@ -51,7 +50,7 @@ class TierMoverTest {
     AccountService accounts;
 
     private UUID newFile(String content) {
-        UserAccount owner = accounts.signIn(new SignInProfile("t:" + UUID.randomUUID(), UUID.randomUUID() + "@example.com", "T", null));
+        UserAccount owner = accounts.register("t" + UUID.randomUUID().toString().substring(0, 12), "correct horse battery");
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         StoredFile uploaded = files.upload(owner, "f.txt", null, "text/plain", bytes.length, new ByteArrayInputStream(bytes));
         return uploaded.getId();

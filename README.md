@@ -8,7 +8,7 @@ that idle files are archived and frequently used ones stay fast.
 UI or in the file API. Opening an archived file simply works (it is restored transparently). The only
 place the mechanism is visible is **Admin panel → Storage operations**, for administrators.
 
-Core features: sign in with Google, administrator approval of new accounts, private per-account
+Core features: username and password sign-in with "Create account", administrator approval of new accounts, private per-account
 drives with nested folders, and drag-and-drop. No sharing between accounts yet.
 
 ## Run it
@@ -19,51 +19,50 @@ Requires Java 21+, Maven, Node 20+ and Docker (for the PostgreSQL database).
 # terminal 0 – PostgreSQL on localhost:5432 (once; it keeps running and keeps its data)
 docker compose up -d
 
-# terminal 1 – API on http://localhost:8080 (the dev profile adds a password-less sign-in and sample data)
+# terminal 1 – API on http://localhost:8080 (the dev profile makes the username "admin" the administrator and adds sample data)
 cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # terminal 2 – UI on http://localhost:5173
 cd frontend && npm install && npm run dev
 ```
 
-With the `dev` profile, the first start fills the drive of `admin@dev.local` with 12 sample files in a small
-folder tree (Reports › Archive, Notes) that have a month-plus of access history. Sign in as the
-**Administrator** on the login page, open **Admin panel → Storage operations** and press **Run now** to watch
-the optimizer archive the idle ones.
+With the `dev` profile, the first start fills the drive of the **`admin`** account with 12 sample files in a
+small folder tree (Reports › Archive, Notes) that have a month-plus of access history. That account starts
+without a password: on the login page choose **Create account**, enter the username `admin` and pick your own
+password, and you are signed in as the administrator with the sample drive. Then open **Admin panel →
+Storage operations** and press **Run now** to watch the optimizer archive the idle ones.
 
 ## Sign-in and approval
 
-1. A person clicks **Continue with Google**. The first time, an account is created in the **Waiting** state.
-2. They see a "Waiting for approval" page, which updates by itself once they are approved.
+1. A person chooses **Create account** and picks a username (3 to 30 characters: letters, digits, dot, dash,
+   underscore) and a password (at least 8 characters). The account starts in the **Waiting** state.
+2. They see a "Waiting for approval" page, which updates by itself once they are approved. Next time they
+   simply **Sign in** with the same username and password.
 3. An administrator opens **Admin panel → Accounts** and chooses **Approve** or **Reject**. Approved people
    can be **Revoked** later, and rejected people approved. A decision applies immediately, even to someone
    who is signed in.
 4. Everyone's drive is private: another account's files and folders do not exist as far as you are concerned.
 
-Administrators are the Google accounts listed in `auth.admin-emails`; they are approved automatically and
-cannot be approved, rejected or revoked by anyone (including each other).
-
-### Turning on "Continue with Google"
-
-This needs an OAuth client from your own Google Cloud project; the app cannot create one for you.
-
-1. Google Cloud Console → **APIs & Services → OAuth consent screen**: set up the app (External is fine;
-   while in *Testing*, add the Google accounts that should be able to sign in as test users).
-2. **Credentials → Create credentials → OAuth client ID → Web application.**
-3. Under **Authorized redirect URIs** add exactly: `http://localhost:5173/login/oauth2/code/google`
-   (for a real deployment use `https://<your-domain>/login/oauth2/code/google`).
-4. Start the backend with the client ID, secret and your admin email in the environment:
+Administrators are the usernames listed in `auth.admin-usernames` (environment variable
+`AUTH_ADMIN_USERNAMES`). Whoever creates an account with one of those names becomes an administrator, approved
+automatically, so create that account yourself right after the first start. Administrators cannot be approved,
+rejected or revoked by anyone (including each other).
 
 ```bash
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=<client id>
-export SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=<client secret>
-export AUTH_ADMIN_EMAILS=you@gmail.com
+export AUTH_ADMIN_USERNAMES=admin
 cd backend && mvn spring-boot:run
 ```
 
-Without the two Google variables the login page says Google sign-in is not configured. Only Google
-accounts with a **verified** email are accepted. Never enable the `dev` profile in production: it allows
-signing in as any email address.
+### How passwords are handled
+
+- Passwords are stored only as **BCrypt** hashes; they are never returned by the API or written to logs.
+- A wrong username and a wrong password give the same answer ("Wrong username or password"), and an unknown
+  username takes as long to check as a wrong password.
+- After 5 wrong passwords in a row for one username, sign-in is refused for a minute (HTTP 429).
+- Every sign-in starts a fresh session id, and every state-changing request needs the CSRF token.
+- Set `auth.registration-open=false` to switch **Create account** off once everyone has joined.
+- Use HTTPS in front of the server for anything other than local development, so passwords are not sent in
+  clear text.
 
 ## Using the drive
 
@@ -161,7 +160,7 @@ with these defaults, which you can override with environment variables:
 | Password | `drive` | `DB_PASSWORD` |
 
 Tables are created and updated automatically (`spring.jpa.hibernate.ddl-auto: update`), and
-`schema.sql` adds the unique indexes that stop two accounts sharing an email or a Google id. For a real
+`schema.sql` adds the unique indexes that stop two accounts sharing a username. For a real
 deployment, use a strong password and a managed PostgreSQL, and replace `ddl-auto` with a migration tool.
 
 Design rule: **no database transaction is held open across slow disk work.** Uploads write the bytes first
@@ -209,7 +208,7 @@ React UI ──/api──▶ Controllers ──▶ Services ──▶ FileStore 
 | `file`      | Upload, list, download, rename, move, delete. REST controller, service, JPA entity. |
 | `folder`    | The folder tree: create, rename, move, delete (recursive), breadcrumb path. Declares the `FolderContents` port that `file` implements, so the two packages never depend on each other in a cycle. |
 | `account`   | Accounts, roles, approval status and the rules for creating and approving them. |
-| `security`  | Spring Security: Google (OIDC) login, session + CSRF, the per-request approval check, dev sign-in. |
+| `security`  | Spring Security: username/password sign-in, session + CSRF, login throttling, the per-request approval check. |
 | `admin`     | The administrator's account queue (`/api/admin/users`). |
 | `web`       | Maps domain exceptions to problem responses. |
 | `storage`   | `FileStore` interface and the local-disk implementation. Bytes only, no metadata. |
@@ -240,7 +239,9 @@ avoid. The admin page tracks how often that happens.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET    | `/api/auth/config` | Public: how people can sign in |
+| GET    | `/api/auth/config` | Public: whether creating accounts is open |
+| POST   | `/api/auth/register` `{ "username", "password" }` | Create an account (starts waiting for approval) and sign in |
+| POST   | `/api/auth/login` `{ "username", "password" }` | Sign in |
 | GET    | `/api/me` | The signed-in account and its approval status |
 | POST   | `/api/auth/logout` | Sign out |
 | GET    | `/api/admin/users?status=` | Admin: list accounts (`PENDING`, `APPROVED`, `REJECTED`) |

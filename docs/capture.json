@@ -1,9 +1,9 @@
 {
- "generated": "2026-10-14 02:00:39",
+ "generated": "2026-10-15 07:32:36",
  "steps": [
   {
    "id": "config",
-   "title": "Ask how people can sign in",
+   "title": "Ask whether new accounts can be created",
    "note": null,
    "request": {
     "method": "GET",
@@ -39,38 +39,37 @@
      ]
     ],
     "body": {
-     "googleEnabled": false,
-     "devLoginEnabled": true
+     "registrationOpen": true
     },
     "is_json": true,
-    "ms": 3,
-    "sha256": "2f91a5085fefecf412913c4ee9fb2cf748076a932038aaae8b51bc64d8de399c",
-    "bytes": 46
+    "ms": 6,
+    "sha256": "bdb25a95a676bd5ddf162181ae2862c6a15fbf8b4c9e3f414029225fe5e67e4a",
+    "bytes": 25
    },
    "sql": [],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
    "rows": {}
   },
   {
-   "id": "login",
-   "title": "Sign in (development login)",
+   "id": "register",
+   "title": "Create an account",
    "note": null,
    "request": {
     "method": "POST",
-    "path": "/api/auth/dev-login",
+    "path": "/api/auth/register",
     "headers": [
      [
       "Accept",
@@ -90,10 +89,111 @@
      ]
     ],
     "body": {
-     "email": "admin@dev.local",
-     "name": "Dev Admin"
+     "username": "docs-073119",
+     "password": "a long enough password"
     },
-    "curl": "curl -s -X POST \"$BASE/api/auth/dev-login\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@dev.local\",\"name\":\"Dev Admin\"}'"
+    "curl": "curl -s -X POST \"$BASE/api/auth/register\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"username\":\"docs-073119\",\"password\":\"a long enough password\"}'"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-Content-Type-Options",
+      "nosniff"
+     ],
+     [
+      "Cache-Control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "Set-Cookie",
+      "JSESSIONID=<new session>; Path=/; HttpOnly; SameSite=Lax"
+     ]
+    ],
+    "body": {
+     "id": "5295d48c-c656-4d75-9092-dabb07692fbe",
+     "username": "docs-073119",
+     "name": "docs-073119",
+     "role": "USER",
+     "status": "PENDING",
+     "createdAt": "2026-10-15T02:01:19.402420291Z"
+    },
+    "is_json": true,
+    "ms": 186,
+    "sha256": "832c87fe1a866f6dcea2cef884da98ad40f4e0c4dc60311a872758f4f5abaa85",
+    "bytes": 169
+   },
+   "sql": [
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.username=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.id=?",
+    "insert into accounts (created_at,decided_at,email,name,password_hash,quota_bytes,role,status,subject,username,id) values (?,?,?,?,?,?,?,?,?,?,?)"
+   ],
+   "counts_before": {
+    "accounts": 3,
+    "folders": 3,
+    "stored_files": 16,
+    "access_logs": 76
+   },
+   "counts_after": {
+    "accounts": 4,
+    "folders": 3,
+    "stored_files": 16,
+    "access_logs": 76
+   },
+   "disk_added": {},
+   "disk_removed": {},
+   "rows": {
+    "accounts": {
+     "id": "5295d48c-c656-4d75-9092-dabb07692fbe",
+     "created_at": "2026-10-15T02:01:19.40242+00:00",
+     "decided_at": null,
+     "email": null,
+     "name": "docs-073119",
+     "picture_url": null,
+     "quota_bytes": null,
+     "role": "USER",
+     "status": "PENDING",
+     "subject": "user:docs-073119",
+     "password_hash": "$2a$10$\u2026 (a BCrypt hash of the password, shortened here)",
+     "username": "docs-073119"
+    }
+   }
+  },
+  {
+   "id": "login",
+   "title": "Sign in",
+   "note": null,
+   "request": {
+    "method": "POST",
+    "path": "/api/auth/login",
+    "headers": [
+     [
+      "Accept",
+      "*/*"
+     ],
+     [
+      "Cookie",
+      "JSESSIONID=<your session>"
+     ],
+     [
+      "Content-Type",
+      "application/json"
+     ],
+     [
+      "X-XSRF-TOKEN",
+      "<value of the XSRF-TOKEN cookie>"
+     ]
+    ],
+    "body": {
+     "username": "docs-admin",
+     "password": "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+    },
+    "curl": "curl -s -X POST \"$BASE/api/auth/login\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"username\":\"docs-admin\",\"password\":\"<your password>\"}'"
    },
    "response": {
     "status": 200,
@@ -117,48 +217,49 @@
      ]
     ],
     "body": {
-     "id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
-     "email": "admin@dev.local",
-     "name": "Dev Admin",
-     "pictureUrl": null,
+     "id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
+     "username": "docs-admin",
+     "name": "docs-admin",
      "role": "ADMIN",
      "status": "APPROVED",
-     "createdAt": "2026-10-11T12:10:36.981060Z"
+     "createdAt": "2026-10-15T02:01:18.321741Z"
     },
     "is_json": true,
-    "ms": 7,
-    "sha256": "7383f5a42496d3f52e5a06b097442b596649065a4b9b774dada4bc8fada8c1e2",
-    "bytes": 185
+    "ms": 168,
+    "sha256": "7621a685235ac4f80b26189d0750b018530e565f1f34bad8d0fa36a3d49846c6",
+    "bytes": 166
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.username=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
    "rows": {
     "accounts": {
-     "id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
-     "created_at": "2026-10-11T12:10:36.98106+00:00",
-     "decided_at": "2026-10-11T12:10:36.98106+00:00",
-     "email": "admin@dev.local",
-     "name": "Dev Admin",
+     "id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
+     "created_at": "2026-10-15T02:01:18.321741+00:00",
+     "decided_at": "2026-10-15T02:01:18.321741+00:00",
+     "email": null,
+     "name": "docs-admin",
      "picture_url": null,
      "quota_bytes": null,
      "role": "ADMIN",
      "status": "APPROVED",
-     "subject": "dev:admin@dev.local"
+     "subject": "user:docs-admin",
+     "password_hash": "$2a$10$\u2026 (a BCrypt hash of the password, shortened here)",
+     "username": "docs-admin"
     }
    }
   },
@@ -200,33 +301,32 @@
      ]
     ],
     "body": {
-     "id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
-     "email": "admin@dev.local",
-     "name": "Dev Admin",
-     "pictureUrl": null,
+     "id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
+     "username": "docs-admin",
+     "name": "docs-admin",
      "role": "ADMIN",
      "status": "APPROVED",
-     "createdAt": "2026-10-11T12:10:36.981060Z"
+     "createdAt": "2026-10-15T02:01:18.321741Z"
     },
     "is_json": true,
-    "ms": 8,
-    "sha256": "7383f5a42496d3f52e5a06b097442b596649065a4b9b774dada4bc8fada8c1e2",
-    "bytes": 185
+    "ms": 16,
+    "sha256": "7621a685235ac4f80b26189d0750b018530e565f1f34bad8d0fa36a3d49846c6",
+    "bytes": 166
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -258,9 +358,9 @@
      ]
     ],
     "body": {
-     "name": "Invoices 020012"
+     "name": "Invoices 073121"
     },
-    "curl": "curl -s -X POST \"$BASE/api/folders\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Invoices 020012\"}'"
+    "curl": "curl -s -X POST \"$BASE/api/folders\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Invoices 073121\"}'"
    },
    "response": {
     "status": 201,
@@ -280,20 +380,20 @@
      ]
     ],
     "body": {
-     "id": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-     "name": "Invoices 020012",
+     "id": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+     "name": "Invoices 073121",
      "parentId": null,
-     "createdAt": "2026-10-13T20:30:12.178882433Z",
+     "createdAt": "2026-10-15T02:01:21.317092870Z",
      "itemCount": 0
     },
     "is_json": true,
-    "ms": 31,
-    "sha256": "c05a5e32ba02be7fc774885d5d2f3690503e20cea2c3542ad2184abdd6205768",
+    "ms": 87,
+    "sha256": "5e5a87087a54d55a94cef23a10c6e193a425b61051172b42c58b9b8b36d49620",
     "bytes": 145
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id is null order by f1_0.name",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=?",
     "insert into folders (created_at,name,owner_id,parent_id,id) values (?,?,?,?,?)",
@@ -301,25 +401,25 @@
     "select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 4,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
    "rows": {
     "folders": {
-     "id": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-     "created_at": "2026-10-13T20:30:12.178882+00:00",
-     "name": "Invoices 020012",
-     "owner_id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
+     "id": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+     "created_at": "2026-10-15T02:01:21.317093+00:00",
+     "name": "Invoices 073121",
+     "owner_id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
      "parent_id": null
     }
    }
@@ -351,9 +451,9 @@
     ],
     "body": {
      "name": "2026",
-     "parentId": "52024967-ed35-4c44-bb69-242b02c5c8cc"
+     "parentId": "edb99951-b1e7-4ca7-a277-4f167931ab51"
     },
-    "curl": "curl -s -X POST \"$BASE/api/folders\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"2026\",\"parentId\":\"52024967-ed35-4c44-bb69-242b02c5c8cc\"}'"
+    "curl": "curl -s -X POST \"$BASE/api/folders\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"2026\",\"parentId\":\"edb99951-b1e7-4ca7-a277-4f167931ab51\"}'"
    },
    "response": {
     "status": 201,
@@ -373,20 +473,20 @@
      ]
     ],
     "body": {
-     "id": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+     "id": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
      "name": "2026",
-     "parentId": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-     "createdAt": "2026-10-13T20:30:12.646444064Z",
+     "parentId": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+     "createdAt": "2026-10-15T02:01:21.920938139Z",
      "itemCount": 0
     },
     "is_json": true,
-    "ms": 29,
-    "sha256": "92c26823c064c1ac93615e34105e2ba7501d162ac631ee6a60c9771e44800138",
+    "ms": 43,
+    "sha256": "06125ad2d67c658f8fc73e9c1ca4e0b2f12ee611aaaa051b3023e66bfea3cfd4",
     "bytes": 168
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=?",
@@ -395,26 +495,26 @@
     "select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 4,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
    "rows": {
     "folders": {
-     "id": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
-     "created_at": "2026-10-13T20:30:12.646444+00:00",
+     "id": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
+     "created_at": "2026-10-15T02:01:21.920938+00:00",
      "name": "2026",
-     "owner_id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
-     "parent_id": "52024967-ed35-4c44-bb69-242b02c5c8cc"
+     "owner_id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
+     "parent_id": "edb99951-b1e7-4ca7-a277-4f167931ab51"
     }
    }
   },
@@ -445,11 +545,11 @@
     ],
     "body": {
      "multipart": {
-      "folderId": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+      "folderId": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
       "file": "@invoices-march.csv (text/csv, 668787 bytes)"
      }
     },
-    "curl": "curl -s -X POST \"$BASE/api/files\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -F \"file=@invoices-march.csv;type=text/csv\" \\\n  -F \"folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3\""
+    "curl": "curl -s -X POST \"$BASE/api/files\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -F \"file=@invoices-march.csv;type=text/csv\" \\\n  -F \"folderId=3951b908-0cbc-41cd-a27a-f2455ea0db6e\""
    },
    "response": {
     "status": 201,
@@ -469,68 +569,68 @@
      ]
     ],
     "body": {
-     "id": "603ccba2-bd8b-4b8b-be0e-7ea824cc86b9",
+     "id": "ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e",
      "name": "invoices-march.csv",
-     "folderId": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+     "folderId": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
      "contentType": "text/csv",
      "sizeBytes": 668787,
-     "uploadedAt": "2026-10-13T20:30:13.156541675Z",
-     "lastAccessedAt": "2026-10-13T20:30:13.156541675Z"
+     "uploadedAt": "2026-10-15T02:01:22.987909798Z",
+     "lastAccessedAt": "2026-10-15T02:01:22.987909798Z"
     },
     "is_json": true,
-    "ms": 59,
-    "sha256": "802ca7d66fbaa09730e45b3c1fbe4b09c5088c593d9e42fd89636b6f622339fa",
+    "ms": 330,
+    "sha256": "6c4be84106a013ffc544d0c2accf2a17f71e9708d5eac9f3198d3b7ab7502e61",
     "bytes": 263
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?",
     "select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=?",
     "insert into stored_files (access_count,content_type,folder_id,hot_probability,last_accessed_at,name,owner_id,size_bytes,stored_size_bytes,tier,uploaded_at,id) values (?,?,?,?,?,?,?,?,?,?,?,?)"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-3/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22
    },
    "disk_removed": {},
    "rows": {
     "stored_files": {
-     "id": "603ccba2-bd8b-4b8b-be0e-7ea824cc86b9",
+     "id": "ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e",
      "access_count": 0,
      "content_type": "text/csv",
-     "folder_id": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+     "folder_id": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
      "hot_probability": null,
-     "last_accessed_at": "2026-10-13T20:30:13.156542+00:00",
+     "last_accessed_at": "2026-10-15T02:01:22.98791+00:00",
      "name": "invoices-march.csv",
-     "owner_id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
+     "owner_id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
      "size_bytes": 668787,
      "stored_size_bytes": 668787,
      "tier": "HOT",
-     "uploaded_at": "2026-10-13T20:30:13.156542+00:00"
+     "uploaded_at": "2026-10-15T02:01:22.98791+00:00"
     }
    }
   },
@@ -540,7 +640,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement",
+    "path": "/api/admin/storage/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/placement",
     "headers": [
      [
       "Accept",
@@ -552,7 +652,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s \"$BASE/api/admin/storage/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/placement\" -b cookies.txt"
+    "curl": "curl -s \"$BASE/api/admin/storage/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/placement\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -580,7 +680,7 @@
        "sizeBytes": 262144,
        "nodes": [
         {
-         "name": "node-5",
+         "name": "node-2",
          "online": true
         },
         {
@@ -588,7 +688,7 @@
          "online": true
         },
         {
-         "name": "node-1",
+         "name": "node-4",
          "online": true
         }
        ]
@@ -603,11 +703,11 @@
          "online": true
         },
         {
-         "name": "node-4",
+         "name": "node-2",
          "online": true
         },
         {
-         "name": "node-3",
+         "name": "node-5",
          "online": true
         }
        ]
@@ -618,11 +718,11 @@
        "sizeBytes": 144499,
        "nodes": [
         {
-         "name": "node-5",
+         "name": "node-2",
          "online": true
         },
         {
-         "name": "node-3",
+         "name": "node-4",
          "online": true
         },
         {
@@ -634,24 +734,24 @@
      ]
     },
     "is_json": true,
-    "ms": 163,
-    "sha256": "69f0081e9318fee1b39551b23373c5f1c17e027e1b3962d61fbea47f776a16af",
+    "ms": 666,
+    "sha256": "3def339578fdb9d2113500a53c64f2d6196d600c156dcbb08bd16ef1c3422372",
     "bytes": 477
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -697,8 +797,8 @@
     "body": {
      "replicationFactor": 3,
      "nodesThatCanFail": 2,
-     "files": 14,
-     "chunks": 36,
+     "files": 17,
+     "chunks": 102,
      "underReplicatedChunks": 0,
      "chunkBytes": 262144,
      "separateProcesses": true,
@@ -708,62 +808,62 @@
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9101",
-       "chunks": 24,
-       "bytes": 4477681
+       "chunks": 64,
+       "bytes": 14777056
       },
       {
        "name": "node-2",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9102",
-       "chunks": 19,
-       "bytes": 3668561
+       "chunks": 50,
+       "bytes": 11490970
       },
       {
        "name": "node-3",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9103",
-       "chunks": 24,
-       "bytes": 5222712
+       "chunks": 58,
+       "bytes": 13752184
       },
       {
        "name": "node-4",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9104",
-       "chunks": 17,
-       "bytes": 3562607
+       "chunks": 61,
+       "bytes": 14664661
       },
       {
        "name": "node-5",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9105",
-       "chunks": 24,
-       "bytes": 4725487
+       "chunks": 73,
+       "bytes": 17373482
       }
      ]
     },
     "is_json": true,
-    "ms": 1406,
-    "sha256": "b8c4590c0248157dd001ba54e719c053950a391f5635766dd5ee172691ba1f2d",
-    "bytes": 708
+    "ms": 7200,
+    "sha256": "51538c29e88363d40c37e3aa6d618e9072eaf57b4995764d765bd0020ac145b3",
+    "bytes": 714
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -775,7 +875,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/files?folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+    "path": "/api/files?folderId=3951b908-0cbc-41cd-a27a-f2455ea0db6e",
     "headers": [
      [
       "Accept",
@@ -787,7 +887,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s \"$BASE/api/files?folderId=ebec0113-0552-4a92-a2ed-b0052bfadcc3\" -b cookies.txt"
+    "curl": "curl -s \"$BASE/api/files?folderId=3951b908-0cbc-41cd-a27a-f2455ea0db6e\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -808,36 +908,36 @@
     ],
     "body": [
      {
-      "id": "603ccba2-bd8b-4b8b-be0e-7ea824cc86b9",
+      "id": "ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e",
       "name": "invoices-march.csv",
-      "folderId": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+      "folderId": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
       "contentType": "text/csv",
       "sizeBytes": 668787,
-      "uploadedAt": "2026-10-13T20:30:13.156542Z",
-      "lastAccessedAt": "2026-10-13T20:30:13.156542Z"
+      "uploadedAt": "2026-10-15T02:01:22.987910Z",
+      "lastAccessedAt": "2026-10-15T02:01:22.987910Z"
      }
     ],
     "is_json": true,
-    "ms": 16,
-    "sha256": "c3631ba42e7484301a3aceacf17a862c1997753697274da2372d143ac7237d9a",
+    "ms": 43,
+    "sha256": "d032191e2ecb6cd4e14dea79c0e3a7bec6686fa8790519aa79803c8eab538169",
     "bytes": 259
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.owner_id=? and sf1_0.folder_id=? order by sf1_0.name"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -849,7 +949,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/folders?parentId=52024967-ed35-4c44-bb69-242b02c5c8cc",
+    "path": "/api/folders?parentId=edb99951-b1e7-4ca7-a277-4f167931ab51",
     "headers": [
      [
       "Accept",
@@ -861,7 +961,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s \"$BASE/api/folders?parentId=52024967-ed35-4c44-bb69-242b02c5c8cc\" -b cookies.txt"
+    "curl": "curl -s \"$BASE/api/folders?parentId=edb99951-b1e7-4ca7-a277-4f167931ab51\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -882,36 +982,36 @@
     ],
     "body": [
      {
-      "id": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+      "id": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
       "name": "2026",
-      "parentId": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-      "createdAt": "2026-10-13T20:30:12.646444Z",
+      "parentId": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+      "createdAt": "2026-10-15T02:01:21.920938Z",
       "itemCount": 1
      }
     ],
     "is_json": true,
-    "ms": 20,
-    "sha256": "576adcaeab604cbde017bdfad96009eaa16cb33f659effceb0107e4e02a8cc4c",
+    "ms": 26,
+    "sha256": "a8010fa8d74fd81860fe938a650d222362b8536895b358d9d1c83cf2a3cf8e94",
     "bytes": 167
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name",
     "select count(sf1_0.id) from stored_files sf1_0 where sf1_0.folder_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -956,36 +1056,36 @@
     ],
     "body": [
      {
-      "id": "603ccba2-bd8b-4b8b-be0e-7ea824cc86b9",
+      "id": "ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e",
       "name": "invoices-march.csv",
-      "folderId": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+      "folderId": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
       "contentType": "text/csv",
       "sizeBytes": 668787,
-      "uploadedAt": "2026-10-13T20:30:13.156542Z",
-      "lastAccessedAt": "2026-10-13T20:30:13.156542Z"
+      "uploadedAt": "2026-10-15T02:01:22.987910Z",
+      "lastAccessedAt": "2026-10-15T02:01:22.987910Z"
      }
     ],
     "is_json": true,
-    "ms": 16,
-    "sha256": "c3631ba42e7484301a3aceacf17a862c1997753697274da2372d143ac7237d9a",
+    "ms": 30,
+    "sha256": "d032191e2ecb6cd4e14dea79c0e3a7bec6686fa8790519aa79803c8eab538169",
     "bytes": 259
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.owner_id=? and upper(sf1_0.name) like upper(?) escape '\\' order by sf1_0.uploaded_at desc"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -997,7 +1097,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path",
+    "path": "/api/folders/3951b908-0cbc-41cd-a27a-f2455ea0db6e/path",
     "headers": [
      [
       "Accept",
@@ -1009,7 +1109,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s \"$BASE/api/folders/ebec0113-0552-4a92-a2ed-b0052bfadcc3/path\" -b cookies.txt"
+    "curl": "curl -s \"$BASE/api/folders/3951b908-0cbc-41cd-a27a-f2455ea0db6e/path\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -1030,38 +1130,38 @@
     ],
     "body": [
      {
-      "id": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-      "name": "Invoices 020012",
+      "id": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+      "name": "Invoices 073121",
       "parentId": null
      },
      {
-      "id": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
+      "id": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
       "name": "2026",
-      "parentId": "52024967-ed35-4c44-bb69-242b02c5c8cc"
+      "parentId": "edb99951-b1e7-4ca7-a277-4f167931ab51"
      }
     ],
     "is_json": true,
-    "ms": 16,
-    "sha256": "e5ec964c412bfb75cd4ff96de89309bf219df353c20fecb7dfc5863dc87d1509",
+    "ms": 36,
+    "sha256": "72a55362329abda9530edebb3a4772a2c29aad9ced3eaf19babf0b1f50107077",
     "bytes": 198
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1105,30 +1205,30 @@
      ]
     ],
     "body": {
-     "usedBytes": 7442468,
+     "usedBytes": 668787,
      "quotaBytes": 1073741824
     },
     "is_json": true,
-    "ms": 17,
-    "sha256": "e7226514255a2a70336ffeee85230b8d9de7bc03ab87104ab0b8d2f28b43f3c5",
-    "bytes": 45
+    "ms": 18,
+    "sha256": "64ab2e368b3a1b6d80166a263d1470d4fa8294071c3dbd3c5eb526596c16be56",
+    "bytes": 44
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1140,7 +1240,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view",
+    "path": "/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/view",
     "headers": [
      [
       "Accept",
@@ -1152,7 +1252,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s \"$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/view\" -b cookies.txt"
+    "curl": "curl -s \"$BASE/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/view\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -1181,13 +1281,13 @@
     ],
     "body": "invoice,customer,amount,status\nINV-2026-00001,Customer 1,37.01,paid\nINV-2026-00002,Customer 2,74.02,paid\nINV-2026-00003,Customer 3,111.03,due\nINV-2026-00004,Customer 4,148.04,paid\nINV-2026-00005,Customer 5,185.05,paid\nINV-2026-00006,Customer 6,222.06,due\nINV-2026-00007,Customer 7,259.07,paid\nINV-2026-00008,Customer 8,296.08,paid\nINV-2026-00009,Customer 9,333.09,due\nINV-2026-00010,Customer 10,370.10,paid\nINV-2026-00011,Customer 11,407.11,paid\nINV-2026-00012,Customer 12,444.12,due\nINV-2026-00013,Customer 13,481.13,paid\nINV-2026-00014,Customer 14,518.14,paid\nINV-2026-00015,Customer 15,555.15,due\nINV-2026-00016,Customer 16,592.16,paid\nINV-2026-00017,Customer 17,629.17,paid\nINV-2026-00018,Custome\u2026",
     "is_json": false,
-    "ms": 475,
+    "ms": 933,
     "sha256": "ce6ef676f1c526ffb8993c475dc1bf87d93c56aac5a30f664c7c4129157e9fd1",
     "bytes": 668787
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=?",
@@ -1195,16 +1295,16 @@
     "update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 60
+    "stored_files": 17,
+    "access_logs": 76
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 61
+    "stored_files": 17,
+    "access_logs": 77
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1216,7 +1316,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download",
+    "path": "/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/download",
     "headers": [
      [
       "Accept",
@@ -1228,7 +1328,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s -OJ \"$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download\" -b cookies.txt"
+    "curl": "curl -s -OJ \"$BASE/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/download\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -1257,29 +1357,29 @@
     ],
     "body": "invoice,customer,amount,status\nINV-2026-00001,Customer 1,37.01,paid\nINV-2026-00002,Customer 2,74.02,paid\nINV-2026-00003,Customer 3,111.03,due\nINV-2026-00004,Customer 4,148.04,paid\nINV-2026-00005,Customer 5,185.05,paid\nINV-2026-00006,Customer 6,222.06,due\nINV-2026-00007,Customer 7,259.07,paid\nINV-2026-00008,Customer 8,296.08,paid\nINV-2026-00009,Customer 9,333.09,due\nINV-2026-00010,Customer 10,370.10,paid\nINV-2026-00011,Customer 11,407.11,paid\nINV-2026-00012,Customer 12,444.12,due\nINV-2026-00013,Customer 13,481.13,paid\nINV-2026-00014,Customer 14,518.14,paid\nINV-2026-00015,Customer 15,555.15,due\nINV-2026-00016,Customer 16,592.16,paid\nINV-2026-00017,Customer 17,629.17,paid\nINV-2026-00018,Custome\u2026",
     "is_json": false,
-    "ms": 424,
+    "ms": 928,
     "sha256": "ce6ef676f1c526ffb8993c475dc1bf87d93c56aac5a30f664c7c4129157e9fd1",
     "bytes": 668787
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=?",
     "insert into access_logs (accessed_at,file_id,response_time_ms,served_from_cold) values (?,?,?,?)",
     "update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 61
+    "stored_files": 17,
+    "access_logs": 77
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 62
+    "stored_files": 17,
+    "access_logs": 78
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1292,7 +1392,7 @@
    "note": null,
    "request": {
     "method": "POST",
-    "path": "/api/admin/storage/nodes/offline?names=node-5,node-3",
+    "path": "/api/admin/storage/nodes/offline?names=node-2,node-3",
     "headers": [
      [
       "Accept",
@@ -1308,7 +1408,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s -X POST \"$BASE/api/admin/storage/nodes/offline?names=node-5,node-3\" \\\n  -b cookies.txt -c cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\""
+    "curl": "curl -s -X POST \"$BASE/api/admin/storage/nodes/offline?names=node-2,node-3\" \\\n  -b cookies.txt -c cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\""
    },
    "response": {
     "status": 200,
@@ -1330,8 +1430,8 @@
     "body": {
      "replicationFactor": 3,
      "nodesThatCanFail": 2,
-     "files": 14,
-     "chunks": 36,
+     "files": 17,
+     "chunks": 102,
      "underReplicatedChunks": 0,
      "chunkBytes": 262144,
      "separateProcesses": true,
@@ -1341,129 +1441,193 @@
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9101",
-       "chunks": 36,
-       "bytes": 7219016
+       "chunks": 102,
+       "bytes": 24019451
       },
       {
        "name": "node-2",
-       "state": "ONLINE",
-       "online": true,
+       "state": "MAINTENANCE",
+       "online": false,
        "endpoint": "http://localhost:9102",
-       "chunks": 36,
-       "bytes": 7219016
+       "chunks": 50,
+       "bytes": 11490970
       },
       {
        "name": "node-3",
        "state": "MAINTENANCE",
        "online": false,
        "endpoint": "http://localhost:9103",
-       "chunks": 24,
-       "bytes": 5222712
+       "chunks": 58,
+       "bytes": 13752184
       },
       {
        "name": "node-4",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9104",
-       "chunks": 36,
-       "bytes": 7218304
+       "chunks": 102,
+       "bytes": 24018739
       },
       {
        "name": "node-5",
-       "state": "MAINTENANCE",
-       "online": false,
+       "state": "ONLINE",
+       "online": true,
        "endpoint": "http://localhost:9105",
-       "chunks": 24,
-       "bytes": 4725487
+       "chunks": 102,
+       "bytes": 24019451
       }
      ]
     },
     "is_json": true,
-    "ms": 9022,
-    "sha256": "b3ac4f13acb4fa681e5af7bbc36e87e23d04597868713eb5c13fec53b7913102",
-    "bytes": 720
+    "ms": 28068,
+    "sha256": "d37d0ddd8439065147c62ba73c5d7fbfde9eff8089be573708a980ea88c84578",
+    "bytes": 729
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 62
+    "stored_files": 17,
+    "access_logs": 78
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 62
+    "stored_files": 17,
+    "access_logs": 78
    },
    "disk_added": {
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c44": 262144,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c1": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c35": 262144,
     "node-1/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.c0": 76800,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c7": 212972,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c57": 262144,
     "node-1/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c5": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c23": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c22": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c13": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c43": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c26": 262144,
     "node-1/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.manifest": 21,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c51": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c4": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c46": 262144,
     "node-1/hot/4fded20e-be24-4607-9e9e-78f343791a9d.manifest": 22,
+    "node-1/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.manifest": 22,
     "node-1/hot/7d26f399-4342-4631-8aad-a08479667116.c0": 92160,
+    "node-1/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c20": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c48": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c14": 262144,
+    "node-1/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c2": 75712,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c3": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c27": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c31": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c59": 133870,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c0": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c16": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c49": 262144,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c1": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c9": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c3": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c55": 262144,
     "node-1/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c0": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
     "node-1/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.manifest.gz": 42,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c1": 262144,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c6": 262144,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c5": 262144,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.manifest": 23,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c4": 262144,
-    "node-2/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.c0": 153600,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.manifest": 23,
-    "node-2/hot/4fded20e-be24-4607-9e9e-78f343791a9d.c0": 262144,
-    "node-2/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.manifest": 21,
-    "node-2/hot/af7e5734-f3f8-4732-b9a6-91b33b473fac.manifest": 21,
-    "node-2/hot/82d192c8-d15a-432f-9446-6b39d440462c.c1": 127057,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.c4": 180224,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-2/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.c0": 40920,
-    "node-2/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.c0": 20460,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c0": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.c1": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.manifest": 23,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c3": 262144,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c3": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c30": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c2": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c44": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c2": 262144,
+    "node-4/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c2": 75712,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c1": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c35": 262144,
     "node-4/hot/82d192c8-d15a-432f-9446-6b39d440462c.manifest": 22,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c22": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c56": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c54": 262144,
     "node-4/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.manifest": 22,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c40": 262144,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c4": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c50": 262144,
     "node-4/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.c0": 153600,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c13": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.manifest": 23,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
     "node-4/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.manifest": 21,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c18": 262144,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c6": 65496,
     "node-4/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c1": 229376,
     "node-4/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.manifest": 21,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c29": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c4": 262144,
     "node-4/hot/82d192c8-d15a-432f-9446-6b39d440462c.c1": 127057,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c46": 262144,
     "node-4/hot/4fded20e-be24-4607-9e9e-78f343791a9d.manifest": 22,
     "node-4/hot/7d26f399-4342-4631-8aad-a08479667116.c0": 92160,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c21": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c5": 262144,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c24": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c19": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c4": 180224,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c25": 262144,
     "node-4/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.c0": 40920,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c3": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c27": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c39": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c1": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.manifest": 23,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c7": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c53": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c0": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c17": 262144,
     "node-4/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.manifest": 21,
-    "node-4/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.c0.gz": 750
+    "node-4/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.c0.gz": 750,
+    "node-5/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.manifest": 22,
+    "node-5/hot/af7e5734-f3f8-4732-b9a6-91b33b473fac.c0": 61440,
+    "node-5/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.c0": 76800,
+    "node-5/hot/6734caf2-2245-4279-aa69-67f8478b0246.c7": 212972,
+    "node-5/hot/4fded20e-be24-4607-9e9e-78f343791a9d.c1": 45056,
+    "node-5/hot/7d26f399-4342-4631-8aad-a08479667116.manifest": 21,
+    "node-5/hot/82d192c8-d15a-432f-9446-6b39d440462c.manifest": 22,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c32": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.manifest": 23,
+    "node-5/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.manifest": 22,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c2": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-5/hot/82d192c8-d15a-432f-9446-6b39d440462c.c0": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c0": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c18": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c1": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c15": 262144,
+    "node-5/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c1": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.manifest": 22,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c34": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c48": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c2": 75712,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c39": 262144,
+    "node-5/hot/6734caf2-2245-4279-aa69-67f8478b0246.c1": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c3": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c47": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c33": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c3": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c36": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c4": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.manifest": 25,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c7": 262144,
+    "node-5/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c0": 262144,
+    "node-5/hot/fbdce553-ea78-4ab8-ac55-444381268179.c0": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c38": 262144,
+    "node-5/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.manifest": 21
    },
    "disk_removed": {},
    "rows": {}
@@ -1474,7 +1638,7 @@
    "note": null,
    "request": {
     "method": "GET",
-    "path": "/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download",
+    "path": "/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/download",
     "headers": [
      [
       "Accept",
@@ -1486,7 +1650,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s -OJ \"$BASE/api/files/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9/download\" -b cookies.txt"
+    "curl": "curl -s -OJ \"$BASE/api/files/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e/download\" -b cookies.txt"
    },
    "response": {
     "status": 200,
@@ -1515,36 +1679,36 @@
     ],
     "body": "invoice,customer,amount,status\nINV-2026-00001,Customer 1,37.01,paid\nINV-2026-00002,Customer 2,74.02,paid\nINV-2026-00003,Customer 3,111.03,due\nINV-2026-00004,Customer 4,148.04,paid\nINV-2026-00005,Customer 5,185.05,paid\nINV-2026-00006,Customer 6,222.06,due\nINV-2026-00007,Customer 7,259.07,paid\nINV-2026-00008,Customer 8,296.08,paid\nINV-2026-00009,Customer 9,333.09,due\nINV-2026-00010,Customer 10,370.10,paid\nINV-2026-00011,Customer 11,407.11,paid\nINV-2026-00012,Customer 12,444.12,due\nINV-2026-00013,Customer 13,481.13,paid\nINV-2026-00014,Customer 14,518.14,paid\nINV-2026-00015,Customer 15,555.15,due\nINV-2026-00016,Customer 16,592.16,paid\nINV-2026-00017,Customer 17,629.17,paid\nINV-2026-00018,Custome\u2026",
     "is_json": false,
-    "ms": 741,
+    "ms": 888,
     "sha256": "ce6ef676f1c526ffb8993c475dc1bf87d93c56aac5a30f664c7c4129157e9fd1",
     "bytes": 668787
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=? and sf1_0.owner_id=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.id=?",
     "insert into access_logs (accessed_at,file_id,response_time_ms,served_from_cold) values (?,?,?,?)",
     "update stored_files set access_count=?,content_type=?,folder_id=?,hot_probability=?,last_accessed_at=?,name=?,owner_id=?,size_bytes=?,stored_size_bytes=?,tier=?,uploaded_at=? where id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 62
+    "stored_files": 17,
+    "access_logs": 78
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
    "rows": {},
    "original_sha256": "ce6ef676f1c526ffb8993c475dc1bf87d93c56aac5a30f664c7c4129157e9fd1",
    "holders_down": [
-    "node-5",
+    "node-2",
     "node-3"
    ]
   },
@@ -1554,7 +1718,7 @@
    "note": null,
    "request": {
     "method": "POST",
-    "path": "/api/admin/storage/nodes/online?names=node-5,node-3",
+    "path": "/api/admin/storage/nodes/online?names=node-2,node-3",
     "headers": [
      [
       "Accept",
@@ -1570,7 +1734,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s -X POST \"$BASE/api/admin/storage/nodes/online?names=node-5,node-3\" \\\n  -b cookies.txt -c cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\""
+    "curl": "curl -s -X POST \"$BASE/api/admin/storage/nodes/online?names=node-2,node-3\" \\\n  -b cookies.txt -c cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\""
    },
    "response": {
     "status": 200,
@@ -1592,8 +1756,8 @@
     "body": {
      "replicationFactor": 3,
      "nodesThatCanFail": 2,
-     "files": 14,
-     "chunks": 36,
+     "files": 17,
+     "chunks": 102,
      "underReplicatedChunks": 0,
      "chunkBytes": 262144,
      "separateProcesses": true,
@@ -1603,134 +1767,199 @@
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9101",
-       "chunks": 24,
-       "bytes": 4477681
+       "chunks": 64,
+       "bytes": 14777056
       },
       {
        "name": "node-2",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9102",
-       "chunks": 19,
-       "bytes": 3668561
+       "chunks": 50,
+       "bytes": 11490970
       },
       {
        "name": "node-3",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9103",
-       "chunks": 24,
-       "bytes": 5222712
+       "chunks": 58,
+       "bytes": 13752184
       },
       {
        "name": "node-4",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9104",
-       "chunks": 17,
-       "bytes": 3562607
+       "chunks": 61,
+       "bytes": 14664661
       },
       {
        "name": "node-5",
        "state": "ONLINE",
        "online": true,
        "endpoint": "http://localhost:9105",
-       "chunks": 24,
-       "bytes": 4725487
+       "chunks": 73,
+       "bytes": 17373482
       }
      ]
     },
     "is_json": true,
-    "ms": 6552,
-    "sha256": "b8c4590c0248157dd001ba54e719c053950a391f5635766dd5ee172691ba1f2d",
-    "bytes": 708
+    "ms": 20735,
+    "sha256": "51538c29e88363d40c37e3aa6d618e9072eaf57b4995764d765bd0020ac145b3",
+    "bytes": 714
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c44": 262144,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c1": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c35": 262144,
     "node-1/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.c0": 76800,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c7": 212972,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c57": 262144,
     "node-1/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c5": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c23": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c22": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c2": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c13": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c43": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c26": 262144,
     "node-1/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.manifest": 21,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c51": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c4": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c46": 262144,
     "node-1/hot/4fded20e-be24-4607-9e9e-78f343791a9d.manifest": 22,
+    "node-1/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.manifest": 22,
     "node-1/hot/7d26f399-4342-4631-8aad-a08479667116.c0": 92160,
+    "node-1/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c20": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c48": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c14": 262144,
+    "node-1/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c2": 75712,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c3": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c27": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c31": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c59": 133870,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c0": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c0": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c16": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c49": 262144,
     "node-1/hot/fbdce553-ea78-4ab8-ac55-444381268179.c1": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c9": 262144,
     "node-1/hot/6734caf2-2245-4279-aa69-67f8478b0246.c3": 262144,
+    "node-1/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c55": 262144,
     "node-1/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c0": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
     "node-1/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.manifest.gz": 42,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c1": 262144,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c6": 262144,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c5": 262144,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.manifest": 23,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c4": 262144,
-    "node-2/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.c0": 153600,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.manifest": 23,
-    "node-2/hot/4fded20e-be24-4607-9e9e-78f343791a9d.c0": 262144,
-    "node-2/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.manifest": 21,
-    "node-2/hot/af7e5734-f3f8-4732-b9a6-91b33b473fac.manifest": 21,
-    "node-2/hot/82d192c8-d15a-432f-9446-6b39d440462c.c1": 127057,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.c4": 180224,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-2/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.c0": 40920,
-    "node-2/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.c0": 20460,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c0": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.c1": 262144,
-    "node-2/hot/fbdce553-ea78-4ab8-ac55-444381268179.manifest": 23,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-2/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c3": 262144,
-    "node-2/hot/6734caf2-2245-4279-aa69-67f8478b0246.c3": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c30": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c2": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c44": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c2": 262144,
+    "node-4/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c2": 75712,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c1": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c35": 262144,
     "node-4/hot/82d192c8-d15a-432f-9446-6b39d440462c.manifest": 22,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c22": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c56": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c54": 262144,
     "node-4/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.manifest": 22,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c40": 262144,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c4": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c50": 262144,
     "node-4/hot/4b02e694-6f4e-46f8-8a5f-e9ee28965a37.c0": 153600,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c13": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.manifest": 23,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
     "node-4/hot/8270e013-c9f2-421f-bfa9-9bc1c980482d.manifest": 21,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c18": 262144,
     "node-4/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c6": 65496,
     "node-4/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c1": 229376,
     "node-4/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.manifest": 21,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c29": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c4": 262144,
     "node-4/hot/82d192c8-d15a-432f-9446-6b39d440462c.c1": 127057,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c46": 262144,
     "node-4/hot/4fded20e-be24-4607-9e9e-78f343791a9d.manifest": 22,
     "node-4/hot/7d26f399-4342-4631-8aad-a08479667116.c0": 92160,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c21": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c5": 262144,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c24": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c19": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c4": 180224,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c25": 262144,
     "node-4/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.c0": 40920,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c3": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c27": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c39": 262144,
     "node-4/hot/6734caf2-2245-4279-aa69-67f8478b0246.c1": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.manifest": 23,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c7": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c53": 262144,
     "node-4/hot/fbdce553-ea78-4ab8-ac55-444381268179.c0": 262144,
+    "node-4/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c17": 262144,
     "node-4/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.manifest": 21,
-    "node-4/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.c0.gz": 750
+    "node-4/cold/b9fb096a-6579-491f-9a5e-5b9f816b10f9.c0.gz": 750,
+    "node-5/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.manifest": 22,
+    "node-5/hot/af7e5734-f3f8-4732-b9a6-91b33b473fac.c0": 61440,
+    "node-5/hot/9422ea7f-16ed-44a8-a275-4bce6535c878.c0": 76800,
+    "node-5/hot/6734caf2-2245-4279-aa69-67f8478b0246.c7": 212972,
+    "node-5/hot/4fded20e-be24-4607-9e9e-78f343791a9d.c1": 45056,
+    "node-5/hot/7d26f399-4342-4631-8aad-a08479667116.manifest": 21,
+    "node-5/hot/82d192c8-d15a-432f-9446-6b39d440462c.manifest": 22,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c32": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.manifest": 23,
+    "node-5/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.manifest": 22,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c2": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-5/hot/82d192c8-d15a-432f-9446-6b39d440462c.c0": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c0": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c18": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c1": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c15": 262144,
+    "node-5/hot/48dafac8-b258-491f-9fbc-12ce536a11a5.c1": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.manifest": 22,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c34": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c48": 262144,
+    "node-5/hot/429fb55d-bb63-4010-a9fd-ccc7bed4a9a3.c2": 75712,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c39": 262144,
+    "node-5/hot/6734caf2-2245-4279-aa69-67f8478b0246.c1": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c3": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c47": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c33": 262144,
+    "node-5/hot/534d2d76-8c6d-4c0c-8e9b-96538685a465.c3": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c36": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c4": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.manifest": 25,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c7": 262144,
+    "node-5/hot/026c8cc7-ca4e-458a-9f47-9130442b4a78.c0": 262144,
+    "node-5/hot/fbdce553-ea78-4ab8-ac55-444381268179.c0": 262144,
+    "node-5/hot/dea3e708-e020-49ad-9c92-53871f71de8b.c38": 262144,
+    "node-5/hot/0bfa860a-d401-4ec2-b3c8-84c2fdd9229c.manifest": 21
    },
    "rows": {},
    "holders_down": [
-    "node-5",
+    "node-2",
     "node-3"
    ]
   },
@@ -1760,9 +1989,9 @@
      ]
     ],
     "body": {
-     "name": "invoices 020012"
+     "name": "invoices 073121"
     },
-    "curl": "curl -s -X POST \"$BASE/api/folders\" -b cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" -d '{\"name\":\"invoices 020012\"}'"
+    "curl": "curl -s -X POST \"$BASE/api/folders\" -b cookies.txt -H \"X-XSRF-TOKEN: $TOKEN\" \\\n  -H \"Content-Type: application/json\" -d '{\"name\":\"invoices 073121\"}'"
    },
    "response": {
     "status": 409,
@@ -1785,30 +2014,30 @@
      "type": "about:blank",
      "title": "Conflict",
      "status": 409,
-     "detail": "A folder named \"invoices 020012\" already exists here",
+     "detail": "A folder named \"invoices 073121\" already exists here",
      "instance": "/api/folders"
     },
     "is_json": true,
-    "ms": 20,
-    "sha256": "d087f3965ff46d2a0c47ae733bd564c63bf0b9c86087b74c10afc035f19f9645",
+    "ms": 72,
+    "sha256": "5bb36cea82be524c98f2173c727d204ea2b77a728fc0bd2a0d2f6d7f56f3113e",
     "bytes": 146
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id is null order by f1_0.name"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1869,25 +2098,25 @@
      "instance": "/api/folders"
     },
     "is_json": true,
-    "ms": 12,
+    "ms": 21,
     "sha256": "f6119baf67ce5a5e7134e005bab2a6839411ebfe118e333fc307fbc4dd4651dc",
     "bytes": 130
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1932,24 +2161,24 @@
     ],
     "body": "",
     "is_json": false,
-    "ms": 10,
+    "ms": 11,
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "bytes": 0
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?"
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -1996,37 +2225,60 @@
      {
       "account": {
        "id": "5fda1f98-6d14-460f-9da1-a2b27624d743",
-       "email": "admin@dev.local",
+       "username": "admin",
        "name": "Dev Admin",
-       "pictureUrl": null,
        "role": "ADMIN",
        "status": "APPROVED",
        "createdAt": "2026-10-11T12:10:36.981060Z"
       },
-      "usedBytes": 7442468
+      "usedBytes": 23574047
+     },
+     {
+      "account": {
+       "id": "3044d38f-b435-4cc8-99c6-8b54ebbd6846",
+       "username": "new.user",
+       "name": "New User",
+       "role": "USER",
+       "status": "PENDING",
+       "createdAt": "2026-10-14T15:05:40.358378Z"
+      },
+      "usedBytes": 0
+     },
+     {
+      "account": {
+       "id": "9d27633e-bcb2-4378-b33f-7b43399f4f9f",
+       "username": "docs-admin",
+       "name": "docs-admin",
+       "role": "ADMIN",
+       "status": "APPROVED",
+       "createdAt": "2026-10-15T02:01:18.321741Z"
+      },
+      "usedBytes": 668787
      }
     ],
     "is_json": true,
-    "ms": 16,
-    "sha256": "2b3d102160352a7a149870b8de9681e71de1820a0628b14f2902b96faefe5867",
-    "bytes": 219
+    "ms": 28,
+    "sha256": "7b1c7795967684a58bce3184f94cb3bb9ccc24a7855b85505016d4ae32e79b40",
+    "bytes": 580
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 order by ua1_0.created_at",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 order by ua1_0.created_at",
+    "select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?",
+    "select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?",
     "select coalesce(sum(sf1_0.size_bytes),0) from stored_files sf1_0 where sf1_0.owner_id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -2070,39 +2322,39 @@
      ]
     ],
     "body": {
-     "fileCount": 14,
-     "hotFileCount": 13,
+     "fileCount": 17,
+     "hotFileCount": 16,
      "coldFileCount": 1,
-     "logicalBytes": 7442468,
-     "storedBytes": 7218690,
+     "logicalBytes": 24242834,
+     "storedBytes": 24019056,
      "quotaBytes": 1073741824,
-     "downloads": 63,
+     "downloads": 79,
      "coldRestores": 6,
-     "averageResponseMs": 81.39682539682539
+     "averageResponseMs": 267.873417721519
     },
     "is_json": true,
-    "ms": 17,
-    "sha256": "58913625613826c241fcefeb27f6c8ea4e9d552a523d1434ae61667c8783103b",
-    "bytes": 191
+    "ms": 59,
+    "sha256": "99ab5dddc728a9b7328a4bef87a4f660a3941fa3504420b86f60e7698dbb07a3",
+    "bytes": 192
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0",
     "select avg(al1_0.response_time_ms) from access_logs al1_0",
     "select count(*) from access_logs al1_0",
     "select count(al1_0.id) from access_logs al1_0 where al1_0.served_from_cold"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -2150,38 +2402,50 @@
      ]
     ],
     "body": {
-     "summary": "The system holds 14 files: 13 in fast (hot) storage and 1 archived (cold). Together they are 7.1 MB as users see them but occupy 6.9 MB on disk, saving 219 KB (3%). Of 63 downloads, 6 (10%) had to wait for an archived file to be restored, and a download starts in about 81 ms on average.",
+     "status": "OK",
+     "headline": "Storage is healthy: 5 of 5 nodes serving, 3 copies of every chunk.",
+     "summary": "The system holds 17 files: 16 in fast (hot) storage and 1 archived (cold). Together they are 23 MB as users see them but occupy 23 MB on disk, saving 219 KB (1%). Of 79 downloads, 6 (8%) had to wait for an archived file to be restored, and a download starts in about 268 ms on average.",
+     "findings": [
+      "Redundancy: 5 of 5 nodes are serving, every chunk is kept in 3 copies, and 2 more node(s) could fail without losing access to any file.",
+      "Performance: a download starts in about 268 ms, and 8% of 79 downloads waited for an archived file to be restored.",
+      "Efficiency: 6% of files (1 of 17) are archived, saving 219 KB (1%) of disk space.",
+      "The optimizer has not run since the server started, so no files have been archived by it.",
+      "Accounts: 1 of 3 are waiting for approval."
+     ],
      "suggestions": [
+      "1 account(s) are waiting for approval. Review them in the Accounts tab so people can start using the drive.",
       "The storage optimizer has not run since the server started. Run it from this page to archive files that are no longer used."
      ],
      "source": "BUILT_IN",
      "model": null,
      "note": "No AI API key is configured on the server, so this summary was written without AI from the same numbers.",
-     "generatedAt": "2026-10-13T20:30:39.054916329Z"
+     "generatedAt": "2026-10-15T02:02:35.271143599Z"
     },
     "is_json": true,
-    "ms": 23,
-    "sha256": "cabe55ebb22a80189d501d2eb790586e1be14b37572e3509c7ba8490f2c54231",
-    "bytes": 637
+    "ms": 3820,
+    "sha256": "d4d714e5f01456ea8d43f87d7da3acc160543d8fbac00d14cf80c6edf833e5d0",
+    "bytes": 1328
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0",
     "select avg(al1_0.response_time_ms) from access_logs al1_0",
     "select count(*) from access_logs al1_0",
-    "select count(al1_0.id) from access_logs al1_0 where al1_0.served_from_cold"
+    "select count(al1_0.id) from access_logs al1_0 where al1_0.served_from_cold",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.status=? order by ua1_0.created_at",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 order by ua1_0.created_at"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "disk_added": {},
    "disk_removed": {},
@@ -2193,7 +2457,7 @@
    "note": null,
    "request": {
     "method": "DELETE",
-    "path": "/api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc",
+    "path": "/api/folders/edb99951-b1e7-4ca7-a277-4f167931ab51",
     "headers": [
      [
       "Accept",
@@ -2209,7 +2473,7 @@
      ]
     ],
     "body": null,
-    "curl": "curl -s -X DELETE \"$BASE/api/folders/52024967-ed35-4c44-bb69-242b02c5c8cc\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\""
+    "curl": "curl -s -X DELETE \"$BASE/api/folders/edb99951-b1e7-4ca7-a277-4f167931ab51\" \\\n  -b cookies.txt -c cookies.txt \\\n  -H \"X-XSRF-TOKEN: $TOKEN\""
    },
    "response": {
     "status": 204,
@@ -2226,60 +2490,60 @@
     ],
     "body": "",
     "is_json": false,
-    "ms": 73,
+    "ms": 98,
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "bytes": 0
    },
    "sql": [
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
-    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.picture_url,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
+    "select ua1_0.id,ua1_0.created_at,ua1_0.decided_at,ua1_0.email,ua1_0.name,ua1_0.password_hash,ua1_0.quota_bytes,ua1_0.role,ua1_0.status,ua1_0.subject,ua1_0.username from accounts ua1_0 where ua1_0.subject=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.id=? and f1_0.owner_id=?",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name",
     "select f1_0.id,f1_0.created_at,f1_0.name,f1_0.owner_id,f1_0.parent_id from folders f1_0 where f1_0.owner_id=? and f1_0.parent_id=? order by f1_0.name",
+    "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.folder_id=? order by sf1_0.name",
     "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.folder_id=? order by sf1_0.name",
     "select al1_0.id,al1_0.accessed_at,al1_0.file_id,al1_0.response_time_ms,al1_0.served_from_cold from access_logs al1_0 where al1_0.file_id=?",
     "delete from access_logs where id=?",
     "delete from access_logs where id=?",
     "delete from access_logs where id=?",
     "delete from stored_files where id=?",
-    "select sf1_0.id,sf1_0.access_count,sf1_0.content_type,sf1_0.folder_id,sf1_0.hot_probability,sf1_0.last_accessed_at,sf1_0.name,sf1_0.owner_id,sf1_0.size_bytes,sf1_0.stored_size_bytes,sf1_0.tier,sf1_0.uploaded_at from stored_files sf1_0 where sf1_0.folder_id=? order by sf1_0.name",
     "delete from folders where id=?",
     "delete from folders where id=?"
    ],
    "counts_before": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 5,
-    "stored_files": 14,
-    "access_logs": 63
+    "stored_files": 17,
+    "access_logs": 79
    },
    "counts_after": {
-    "accounts": 1,
+    "accounts": 3,
     "folders": 3,
-    "stored_files": 13,
-    "access_logs": 60
+    "stored_files": 16,
+    "access_logs": 76
    },
    "disk_added": {},
    "disk_removed": {
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-1/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-2/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-3/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c1": 262144,
-    "node-4/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c0": 262144,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.c2": 144499,
-    "node-5/hot/603ccba2-bd8b-4b8b-be0e-7ea824cc86b9.manifest": 22
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-1/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-2/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-3/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c0": 262144,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c2": 144499,
+    "node-4/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.c1": 262144,
+    "node-5/hot/ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e.manifest": 22
    },
    "rows": {}
   }
  ],
  "ids": {
-  "invoices": "52024967-ed35-4c44-bb69-242b02c5c8cc",
-  "year": "ebec0113-0552-4a92-a2ed-b0052bfadcc3",
-  "file": "603ccba2-bd8b-4b8b-be0e-7ea824cc86b9"
+  "invoices": "edb99951-b1e7-4ca7-a277-4f167931ab51",
+  "year": "3951b908-0cbc-41cd-a27a-f2455ea0db6e",
+  "file": "ad8d5e2e-6690-4ebf-b9b0-762b37f1df8e"
  },
  "file_bytes": 668787
 }

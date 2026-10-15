@@ -2,6 +2,9 @@ package com.cloudstorage.web;
 
 import com.cloudstorage.account.AccountNotFoundException;
 import com.cloudstorage.account.InvalidAccountChangeException;
+import com.cloudstorage.account.InvalidCredentialsException;
+import com.cloudstorage.account.TooManyAttemptsException;
+import com.cloudstorage.account.UsernameTakenException;
 import com.cloudstorage.file.NotPreviewableException;
 import com.cloudstorage.file.QuotaExceededException;
 import com.cloudstorage.file.StoredFileNotFoundException;
@@ -27,6 +30,21 @@ class ApiExceptionHandler {
     @ExceptionHandler(NotPreviewableException.class)
     ProblemDetail notPreviewable(NotPreviewableException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ProblemDetail wrongCredentials(InvalidCredentialsException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
+    @ExceptionHandler(TooManyAttemptsException.class)
+    ProblemDetail tooManyAttempts(TooManyAttemptsException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
+    }
+
+    @ExceptionHandler(UsernameTakenException.class)
+    ProblemDetail usernameTaken(UsernameTakenException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(DuplicateFolderNameException.class)

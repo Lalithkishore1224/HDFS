@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cloudstorage.account.AccountService;
-import com.cloudstorage.account.SignInProfile;
 import com.cloudstorage.account.UserAccount;
 import com.cloudstorage.file.FileService;
 import com.cloudstorage.file.StoredFile;
@@ -41,8 +40,7 @@ class FolderServiceTest {
     AccountService accounts;
 
     private UserAccount newOwner() {
-        String id = UUID.randomUUID().toString();
-        return accounts.signIn(new SignInProfile("test:" + id, id + "@example.com", "Owner", null));
+        return accounts.register("o" + UUID.randomUUID().toString().substring(0, 12), "correct horse battery");
     }
 
     @Test

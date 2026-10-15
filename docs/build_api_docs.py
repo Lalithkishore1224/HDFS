@@ -189,21 +189,32 @@ ANYONE, MEMBER, ADMIN = 'Anyone', 'A signed-in account that an administrator has
 EXPLAIN = {
     'config': {
         'who': ANYONE,
-        'lead': 'Asks the server how people are allowed to sign in. The sign-in page uses this to decide which buttons to show.',
-        'reply': 'Two yes/no answers: is Google sign-in set up, and is the development login switched on.',
+        'lead': 'Asks the server whether new accounts can be created. The sign-in page uses this to decide whether to show the "Create account" tab.',
+        'reply': 'One yes/no answer: is creating accounts open.',
         'inside': [
             'The server answers straight away. This is the one call that needs no sign-in.',
             'It also hands your browser a small secret called the <b>CSRF token</b> (in a cookie). Later calls that change things must show it, which stops other websites from tricking your browser into acting for you.',
         ],
     },
+    'register': {
+        'who': ANYONE,
+        'lead': 'Creates an account from a username and a password, and signs the new person in.',
+        'reply': 'The new account: username, role and approval status (PENDING until an administrator approves it).',
+        'inside': [
+            '<b>Checks.</b> The username must be 3 to 30 characters (letters, digits, dot, dash, underscore) and not taken; the password must be at least 8 characters. Otherwise the answer is 400 or 409.',
+            '<b>The password is never stored.</b> Only a one-way <b>BCrypt hash</b> is saved, so even the database does not reveal it.',
+            'The account starts as <b>PENDING</b>, which means "waiting for an administrator". Usernames on the administrator list become <b>ADMIN</b> and <b>APPROVED</b> straight away.',
+            'The server starts a <b>session</b>: it sends back a cookie called <code>JSESSIONID</code> that your browser shows on every later call.',
+        ],
+    },
     'login': {
         'who': ANYONE,
-        'lead': 'Signs you in. In the real app this is the "Continue with Google" button; this development version signs in with just an email.',
-        'reply': 'Your account: name, email, role and approval status.',
+        'lead': 'Signs you in with your username and password.',
+        'reply': 'Your account: username, role and approval status.',
         'inside': [
-            'The server looks for an account with this identity. The first time, it creates one; afterwards it just refreshes the name and picture.',
-            'New accounts start as <b>PENDING</b>, which means "waiting for an administrator". Email addresses on the admin list become <b>ADMIN</b> and <b>APPROVED</b> straight away, as here.',
-            'The server remembers you with a <b>session</b>: it sends back a cookie called <code>JSESSIONID</code> that your browser shows on every later call.',
+            'The server finds the account and checks the password against the stored hash. A wrong username and a wrong password give the same answer (401), so nobody can discover which usernames exist.',
+            'After 5 wrong passwords in a row for one username, further attempts are refused for a minute (429), which slows down guessing.',
+            'A successful sign-in starts a fresh <b>session</b> with a new <code>JSESSIONID</code> cookie, so an old session id is useless afterwards.',
         ],
     },
     'me': {
@@ -431,7 +442,7 @@ EXPLAIN = {
 }
 
 GROUPS = [
-    ('A', 'Sign in', 'Every call after this one carries your session cookie.', ['config', 'login', 'me']),
+    ('A', 'Sign in', 'Every call after this one carries your session cookie.', ['config', 'register', 'login', 'me']),
     ('B', 'Create folders', 'A folder is just a database record. Watch the storage grid: nothing is written there.', ['create-folder', 'create-subfolder']),
     ('C', 'Upload a file', 'The one place file contents are written. Here the file is cut up and spread over the storage nodes.', ['upload', 'placement', 'nodes']),
     ('D', 'Get the files', 'Reading is safe: nothing is changed.', ['list-files', 'list-folders', 'search', 'path', 'storage']),
@@ -444,9 +455,9 @@ GROUPS = [
 
 CATALOG = [
     ('Sign in', [
-        ('GET', '/api/auth/config', 'public', 'How can people sign in? (Google, development login)'),
-        ('GET', '/oauth2/authorization/google', 'public', 'Start "Continue with Google" (a browser redirect).'),
-        ('POST', '/api/auth/dev-login', 'dev only', 'Sign in with just an email, for local development.'),
+        ('GET', '/api/auth/config', 'public', 'Can new accounts be created?'),
+        ('POST', '/api/auth/register', 'public', 'Create an account from a username and password (starts waiting for approval) and sign in.'),
+        ('POST', '/api/auth/login', 'public', 'Sign in with a username and password.'),
         ('POST', '/api/auth/logout', 'signed in', 'Sign out.'),
         ('GET', '/api/me', 'signed in', 'Who am I, and am I approved yet?'),
     ]),
@@ -971,7 +982,7 @@ footer { margin-top: 64px; color: var(--muted); font-size: 13px; }
         <li><b>Storage tiers are invisible to users on purpose.</b> A rarely used file may be compressed ("cold"); opening it restores it automatically. Only the admin endpoints show tiers.</li>
         <li><b>Two storage nodes may fail at the same moment</b> without any file becoming unreadable. Three failing together can make the pieces they alone held unreadable until one returns (HTTP 503).</li>
         <li><b>In this setup all five nodes run on one computer</b> (as Docker containers), so a failure of the whole computer is not covered.</li>
-        <li><b>The development login exists only in the <code>dev</code> profile.</b> In real use people arrive through Google and the same account rules apply.</li>
+        <li><b>Passwords are stored as BCrypt hashes only.</b> Use HTTPS in front of the server so passwords are not sent in clear text, and set the administrator usernames in the server settings.</li>
       </ul>
     </div>
   </section>
@@ -1003,10 +1014,10 @@ curl -s -c cookies.txt "$BASE/api/auth/config"
 # 3. Read the token out of the cookie file (used for every POST / PATCH / DELETE)
 TOKEN=$(grep XSRF-TOKEN cookies.txt | awk '{print $7}')
 
-# 4. Sign in (development login; in production use "Continue with Google" in a browser)
-curl -s -b cookies.txt -c cookies.txt -X POST "$BASE/api/auth/dev-login" \\
+# 4. Sign in (or create the account first with POST /api/auth/register)
+curl -s -b cookies.txt -c cookies.txt -X POST "$BASE/api/auth/login" \\
   -H "X-XSRF-TOKEN: $TOKEN" -H "Content-Type: application/json" \\
-  -d '{"email":"admin@dev.local","name":"Dev Admin"}'
+  -d '{"username":"admin","password":"<your password>"}'
 
 # 5. The session cookie changed; refresh the token before the next write
 TOKEN=$(grep XSRF-TOKEN cookies.txt | awk '{print $7}')'''

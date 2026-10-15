@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cloudstorage.TestDatabase;
 import com.cloudstorage.account.AccountService;
-import com.cloudstorage.account.SignInProfile;
 import com.cloudstorage.account.UserAccount;
 import com.cloudstorage.file.FileService;
 import com.cloudstorage.file.StoredFile;
@@ -50,7 +49,7 @@ class ConcurrentUseTest {
     void parallelUploadsDownloadsAndAnOptimizerRunAllSucceed() throws Exception {
         List<UserAccount> people = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            people.add(accounts.signIn(new SignInProfile("c:" + UUID.randomUUID(), UUID.randomUUID() + "@example.com", "P" + i, null)));
+            people.add(accounts.register("c" + UUID.randomUUID().toString().substring(0, 12), "correct horse battery"));
         }
         byte[] payload = new byte[400 * 1024];
         java.util.Arrays.fill(payload, (byte) 'x');

@@ -23,13 +23,10 @@ spring:
     multipart:
       max-file-size: 200MB
       max-request-size: 200MB
-  # "Continue with Google" switches on when these two are set, e.g. through the environment:
-  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
-  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
 
 server:
   # Behind a reverse proxy (Vite in development, nginx in production) the original host arrives in
-  # X-Forwarded-* headers; honoring them makes redirects and Google's callback URL use the public address.
+  # X-Forwarded-* headers; honoring them makes redirects use the public address.
   forward-headers-strategy: framework
   servlet:
     session:
@@ -37,8 +34,8 @@ server:
         same-site: lax
 
 auth:
-  admin-emails: []           # these Google accounts become administrators, e.g. AUTH_ADMIN_EMAILS=you@gmail.com
-  dev-login-enabled: false   # local development only; see application-dev.yml
+  admin-usernames: []        # accounts created with these usernames become administrators, e.g. AUTH_ADMIN_USERNAMES=admin
+  registration-open: true    # whether "Create account" is available
 
 storage:
   root: ./data/files

@@ -26,7 +26,7 @@ export function AccountStatusPage({ account, onRecheck, onSignOut }) {
             ? 'Your account has been created. An administrator needs to approve it before you can use Drive. This page updates on its own.'
             : 'An administrator has declined access for this account. If you think this is a mistake, contact them.'}
         </p>
-        <p className="status-email">{account.email}</p>
+        <p className="status-email">{account.username}</p>
         <div className="status-actions">
           {waiting && (
             <button className="button button-outline" onClick={onRecheck}>

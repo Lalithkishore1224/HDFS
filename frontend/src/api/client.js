@@ -39,8 +39,12 @@ export const api = {
     return request('/api/me');
   },
 
-  devLogin(email, name) {
-    return request('/api/auth/dev-login', jsonRequest('POST', { email, name }));
+  register(username, password) {
+    return request('/api/auth/register', jsonRequest('POST', { username, password }));
+  },
+
+  login(username, password) {
+    return request('/api/auth/login', jsonRequest('POST', { username, password }));
   },
 
   signOut() {

@@ -13,9 +13,11 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 
 @SpringBootTest(properties = {
         "storage.seed-demo-data=false",
-        "auth.admin-emails=boss@example.com,second-boss@example.com"
+        "auth.admin-usernames=boss,second-boss,seeded"
 })
 class AccountServiceTest {
+
+    private static final String PASSWORD = "correct horse battery";
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
@@ -28,14 +30,21 @@ class AccountServiceTest {
     @Autowired
     UserRepository users;
 
-    /** One person, one stable subject: the same email always maps to the same identity. */
-    private SignInProfile profile(String email) {
-        return new SignInProfile("google:" + email.toLowerCase(), email, "Someone", null);
+    private static String newName() {
+        return "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 14);
+    }
+
+    private UserAccount person() {
+        return accounts.register(newName(), PASSWORD);
+    }
+
+    private UserAccount admin(String name) {
+        return accounts.findBySubject("user:" + name).orElseGet(() -> accounts.register(name, PASSWORD));
     }
 
     @Test
     void aNewPersonStartsPendingAndCannotUseTheDriveYet() {
-        UserAccount account = accounts.signIn(profile(UUID.randomUUID() + "@example.com"));
+        UserAccount account = person();
 
         assertThat(account.getStatus()).isEqualTo(AccountStatus.PENDING);
         assertThat(account.getRole()).isEqualTo(AccountRole.USER);
@@ -43,46 +52,86 @@ class AccountServiceTest {
     }
 
     @Test
-    void aConfiguredAdministratorEmailIsApprovedImmediatelyEvenIfCasedDifferently() {
-        UserAccount account = accounts.signIn(profile("Boss@Example.com"));
+    void aConfiguredAdministratorUsernameIsApprovedImmediatelyEvenIfCasedDifferently() {
+        UserAccount account = accounts.register("Second-Boss", PASSWORD);
 
+        assertThat(account.getUsername()).isEqualTo("second-boss");
         assertThat(account.getRole()).isEqualTo(AccountRole.ADMIN);
         assertThat(account.isApproved()).isTrue();
     }
 
     @Test
-    void signingInAgainKeepsTheSameAccountAndRefreshesTheProfile() {
-        SignInProfile first = new SignInProfile("google:same", "same@example.com", "Old Name", null);
-        UserAccount created = accounts.signIn(first);
-        UserAccount again = accounts.signIn(new SignInProfile("google:same", "same@example.com", "New Name", "http://pic"));
+    void thePasswordIsStoredOnlyAsAHashAndCheckedOnSignIn() {
+        String name = newName();
+        UserAccount created = accounts.register(name, PASSWORD);
 
-        assertThat(again.getId()).isEqualTo(created.getId());
-        assertThat(again.getName()).isEqualTo("New Name");
-        assertThat(again.getStatus()).isEqualTo(AccountStatus.PENDING);
+        assertThat(created.getPasswordHash()).startsWith("$2").doesNotContain(PASSWORD);
+        assertThat(accounts.authenticate(name.toUpperCase(), PASSWORD).getId()).isEqualTo(created.getId());
+        assertThatThrownBy(() -> accounts.authenticate(name, "wrong password!"))
+                .isInstanceOf(InvalidCredentialsException.class);
+        assertThatThrownBy(() -> accounts.authenticate("nobody-" + name, PASSWORD))
+                .isInstanceOf(InvalidCredentialsException.class)
+                .hasMessage("Wrong username or password");
     }
 
     @Test
-    void theDatabaseItselfRefusesTwoAccountsForTheSameEmailOrSubject() {
-        String email = UUID.randomUUID() + "@example.com";
-        users.saveAndFlush(UserAccount.register(profile(email), AccountRole.USER, AccountStatus.PENDING, java.time.Instant.now()));
+    void aUsernameCanBeUsedOnlyOnce() {
+        UserAccount first = person();
 
-        SignInProfile sameEmailNewSubject = new SignInProfile("google:other-" + UUID.randomUUID(), email, "Dup", null);
-        assertThatThrownBy(() -> users.saveAndFlush(
-                UserAccount.register(sameEmailNewSubject, AccountRole.USER, AccountStatus.PENDING, java.time.Instant.now())))
-                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class)
-                .hasMessageContaining("ux_accounts_email");
+        assertThatThrownBy(() -> accounts.register(first.getUsername(), "another password"))
+                .isInstanceOf(UsernameTakenException.class);
+    }
 
-        SignInProfile sameSubjectNewEmail = new SignInProfile("google:" + email, UUID.randomUUID() + "@example.com", "Dup", null);
+    @Test
+    void badUsernamesAndShortPasswordsAreRefused() {
+        assertThatThrownBy(() -> accounts.register("ab", PASSWORD)).isInstanceOf(InvalidAccountChangeException.class);
+        assertThatThrownBy(() -> accounts.register("has space", PASSWORD)).isInstanceOf(InvalidAccountChangeException.class);
+        assertThatThrownBy(() -> accounts.register(newName(), "short")).isInstanceOf(InvalidAccountChangeException.class);
+        assertThatThrownBy(() -> accounts.register(newName(), "x".repeat(73))).isInstanceOf(InvalidAccountChangeException.class);
+    }
+
+    @Test
+    void theSeededAdministratorHasNoPasswordUntilSomeoneClaimsIt() {
+        UserAccount seeded = accounts.ensureAdminAccount("seeded");
+        assertThat(seeded.hasPassword()).isFalse();
+        assertThatThrownBy(() -> accounts.authenticate("seeded", PASSWORD)).isInstanceOf(InvalidCredentialsException.class);
+
+        UserAccount claimed = accounts.register("seeded", PASSWORD);
+
+        assertThat(claimed.getId()).isEqualTo(seeded.getId());
+        assertThat(claimed.hasPassword()).isTrue();
+        assertThatThrownBy(() -> accounts.register("seeded", "someone else!!"))
+                .isInstanceOf(UsernameTakenException.class);
+    }
+
+    @Test
+    void anApprovedAccountWithoutAPasswordCannotBeTakenOverByRegistering() {
+        UserAccount victim = person();
+        UserAccount admin = admin("boss");
+        accounts.approve(admin.getId(), victim.getId());
+        victim = users.findById(victim.getId()).orElseThrow();
+        victim.setPasswordHash(null);   // simulate a legacy account that was approved but never had a password
+        users.saveAndFlush(victim);
+
+        String name = victim.getUsername();
+        assertThatThrownBy(() -> accounts.register(name, PASSWORD)).isInstanceOf(UsernameTakenException.class);
+    }
+
+    @Test
+    void theDatabaseItselfRefusesTwoAccountsWithTheSameUsernameOrSubject() {
+        String name = newName();
+        users.saveAndFlush(UserAccount.create(name, name, "hash", AccountRole.USER, AccountStatus.PENDING, java.time.Instant.now()));
+
         assertThatThrownBy(() -> users.saveAndFlush(
-                UserAccount.register(sameSubjectNewEmail, AccountRole.USER, AccountStatus.PENDING, java.time.Instant.now())))
+                UserAccount.create(name, "dup", "hash", AccountRole.USER, AccountStatus.PENDING, java.time.Instant.now())))
                 .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class)
-                .hasMessageContaining("ux_accounts_subject");
+                .hasMessageContaining("ux_accounts_");
     }
 
     @Test
     void anAdministratorCanApproveAndLaterRejectAPerson() {
-        UserAccount admin = accounts.signIn(profile("boss@example.com"));
-        UserAccount person = accounts.signIn(profile(UUID.randomUUID() + "@example.com"));
+        UserAccount admin = admin("boss");
+        UserAccount person = person();
 
         assertThat(accounts.approve(admin.getId(), person.getId()).isApproved()).isTrue();
         assertThat(accounts.reject(admin.getId(), person.getId()).getStatus()).isEqualTo(AccountStatus.REJECTED);
@@ -91,12 +140,12 @@ class AccountServiceTest {
 
     @Test
     void administratorsCannotChangeThemselvesOrEachOther() {
-        UserAccount admin = accounts.signIn(profile("boss@example.com"));
+        UserAccount admin = admin("boss");
 
         assertThatThrownBy(() -> accounts.reject(admin.getId(), admin.getId()))
                 .isInstanceOf(InvalidAccountChangeException.class);
 
-        UserAccount otherAdmin = accounts.signIn(profile("second-boss@example.com"));
+        UserAccount otherAdmin = admin("second-boss");
         assertThatThrownBy(() -> accounts.reject(admin.getId(), otherAdmin.getId()))
                 .isInstanceOf(InvalidAccountChangeException.class);
     }

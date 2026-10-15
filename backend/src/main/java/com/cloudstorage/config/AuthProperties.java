@@ -7,21 +7,22 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Sign-in and approval settings.
  *
- * @param adminEmails     accounts with these emails become administrators, approved on first sign-in
- * @param devLoginEnabled turns on a password-less sign-in for local development; never enable in production
+ * @param adminUsernames   accounts created with one of these usernames become administrators, approved at once
+ * @param registrationOpen whether "Create account" is available
  */
 @ConfigurationProperties("auth")
-public record AuthProperties(List<String> adminEmails, boolean devLoginEnabled) {
+public record AuthProperties(List<String> adminUsernames, Boolean registrationOpen) {
 
     public AuthProperties {
-        adminEmails = adminEmails == null ? List.of() : List.copyOf(adminEmails);
+        adminUsernames = adminUsernames == null ? List.of() : List.copyOf(adminUsernames);
+        registrationOpen = registrationOpen == null || registrationOpen;
     }
 
-    public boolean isAdminEmail(String email) {
-        return email != null && adminEmails.stream().anyMatch(admin -> admin.strip().equalsIgnoreCase(email.strip()));
+    public boolean isAdminUsername(String username) {
+        return username != null && adminUsernames.stream().anyMatch(admin -> admin.strip().equalsIgnoreCase(username.strip()));
     }
 
-    public String normalized(String email) {
-        return email.strip().toLowerCase(Locale.ROOT);
+    public String normalized(String username) {
+        return username.strip().toLowerCase(Locale.ROOT);
     }
 }

@@ -18,7 +18,6 @@ function Root() {
   const [session, setSession] = useState({ state: 'loading' });
   const [hash, setHash] = useState(window.location.hash);
   const [pendingCount, setPendingCount] = useState(0);
-  const authFailed = new URLSearchParams(window.location.search).has('authError');
 
   const loadSession = useCallback(async () => {
     try {
@@ -71,7 +70,6 @@ function Root() {
     return (
       <LoginPage
         config={session.config}
-        authFailed={authFailed}
         onSignedIn={(signedIn) => setSession({ state: 'signedIn', account: signedIn })}
       />
     );

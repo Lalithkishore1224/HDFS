@@ -92,9 +92,8 @@
  * The signed-in person.
  * @typedef {Object} Account
  * @property {string} id
- * @property {string} email
+ * @property {string} username
  * @property {string | null} name
- * @property {string | null} pictureUrl
  * @property {AccountRole} role
  * @property {AccountStatus} status
  * @property {string} createdAt
@@ -103,8 +102,7 @@
 /**
  * How this server lets people sign in.
  * @typedef {Object} AuthConfig
- * @property {boolean} googleEnabled
- * @property {boolean} devLoginEnabled
+ * @property {boolean} registrationOpen Whether "Create account" is available
  */
 
 /**

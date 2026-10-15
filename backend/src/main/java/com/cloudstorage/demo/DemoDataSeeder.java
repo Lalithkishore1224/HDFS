@@ -3,7 +3,6 @@ package com.cloudstorage.demo;
 import com.cloudstorage.access.AccessLog;
 import com.cloudstorage.access.AccessLogRepository;
 import com.cloudstorage.account.AccountService;
-import com.cloudstorage.account.SignInProfile;
 import com.cloudstorage.account.UserAccount;
 import com.cloudstorage.config.AuthProperties;
 import com.cloudstorage.file.FileRepository;
@@ -77,12 +76,11 @@ class DemoDataSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (files.count() > 0 || authProperties.adminEmails().isEmpty()) {
+        if (files.count() > 0 || authProperties.adminUsernames().isEmpty()) {
             return;
         }
-        // The sample drive belongs to the first configured administrator, so signing in as them shows it.
-        String ownerEmail = authProperties.normalized(authProperties.adminEmails().getFirst());
-        UserAccount owner = accounts.signIn(SignInProfile.forDevelopment(ownerEmail, "Dev Admin"));
+        // The sample drive belongs to the first configured administrator, so creating that account (Create account) takes over the sample drive.
+        UserAccount owner = accounts.ensureAdminAccount(authProperties.adminUsernames().getFirst());
         Instant now = clock.instant();
 
         UUID reports = folderService.create(owner.getId(), "Reports", null).id();

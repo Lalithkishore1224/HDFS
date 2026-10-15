@@ -13,7 +13,8 @@ states() { get /api/admin/storage/nodes | python3 -c "import sys,json; print(' '
 wait_for() { for _ in $(seq 1 40); do [ "$(states | tr ' ' '\n' | grep -c "$1")" -eq "$2" ] && return 0; sleep 0.5; done; return 1; }
 
 curl -s "$BASE/api/auth/config" -c "$JAR" >/dev/null
-post /api/auth/dev-login -H 'Content-Type: application/json' -d '{"email":"admin@dev.local","name":"Dev Admin"}' >/dev/null
+# DRIVE_USER / DRIVE_PASSWORD: an administrator account
+post /api/auth/login -H 'Content-Type: application/json' -d "{\"username\":\"${DRIVE_USER:?set DRIVE_USER}\",\"password\":\"${DRIVE_PASSWORD:?set DRIVE_PASSWORD}\"}" >/dev/null
 
 echo "1. Storage nodes running as containers"
 docker ps --filter name=drive-node --format '   {{.Names}}  {{.Status}}  {{.Ports}}' | sort

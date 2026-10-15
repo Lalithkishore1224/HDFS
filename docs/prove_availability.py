@@ -32,7 +32,8 @@ def offline(n): call('POST', f'/api/admin/storage/nodes/{n}/offline')
 def online(n): call('POST', f'/api/admin/storage/nodes/{n}/online')
 
 call('GET', '/api/auth/config')
-call('POST', '/api/auth/dev-login', json.dumps({'email': 'admin@dev.local', 'name': 'Dev Admin'}).encode(), {'Content-Type': 'application/json'})
+call('POST', '/api/auth/login', json.dumps({'username': os.environ['DRIVE_USER'], 'password': os.environ['DRIVE_PASSWORD']}).encode(),
+     {'Content-Type': 'application/json'})   # an administrator account
 
 _, cluster = call('GET', '/api/admin/storage/nodes')
 nodes = [n['name'] for n in cluster['nodes']]
